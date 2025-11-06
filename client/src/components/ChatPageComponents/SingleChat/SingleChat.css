@@ -1,0 +1,9 @@
+.single-chat {
+  background-color: var(--surface-primary);
+  color: var(--text-primary);
+  height: 100%;
+  width: 65%;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: space-between; */
+}

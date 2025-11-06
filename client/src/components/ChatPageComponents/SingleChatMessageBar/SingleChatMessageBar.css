@@ -1,0 +1,74 @@
+.message-bar {
+  padding: 1rem;
+  height: 10%;
+  /* height: 80px; */
+  max-height: 80px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--surface-primary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--surface-border);
+}
+
+.message-bar .message-bar-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-bar .emoji-picker-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-bar .message-bar-icon:hover {
+  cursor: pointer;
+  border-radius: 50%;
+  background-color: var(--accent-muted);
+}
+
+.message-bar .message-bar-searchbar {
+  width: 85%;
+}
+
+.message-bar .message-bar-search-input {
+  background-color: var(--input-bg);
+  height: 2.5rem;
+  text-indent: 1rem;
+  border-radius: 10px;
+  color: var(--text-primary);
+  width: 100%;
+  border: 1px solid var(--surface-border);
+  outline: none;
+}
+
+.message-bar .message-bar-search-input:focus {
+  border: none;
+  outline: none;
+}
+
+.message-bar .message-bar-icon {
+  position: relative;
+}
+
+.message-bar button.message-bar-icon {
+  background-color: transparent;
+  border: none;
+  color: var(--text-primary);
+}
+
+.message-bar .emoji-picker {
+  position: absolute;
+  bottom: 4rem;
+  left: 0;
+}
+
+.message-bar .attachment-hidden-input {
+  display: none;
+}

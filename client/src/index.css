@@ -1,0 +1,81 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --root-bg-color: #0c1317;
+  --app-container-bg-color: #111b21;
+  --app-container-text-color: #e9edef;
+  --surface-primary: #111b21;
+  --surface-secondary: #202c33;
+  --surface-tertiary: #2c2e3b;
+  --surface-border: #222e35;
+  --surface-elevated: #0c1317;
+  --surface-hover: #202c3390;
+  --surface-active: #202c33;
+  --text-primary: #e9edef;
+  --text-secondary: #8696a0;
+  --text-inverse: #111b21;
+  --accent: #415763;
+  --accent-muted: #41576380;
+  --accent-active: #415763a0;
+  --text-on-accent: #ffffff;
+  --tooltip-bg: #bbbbbb;
+  --tooltip-text: #111b21;
+  --input-bg: #202c33;
+  --scrollbar-thumb: #222e35;
+  --separator: rgba(255, 255, 255, 0.08);
+  --bubble-outgoing: #005c4b;
+  --bubble-incoming: #2a3942;
+  --bubble-outgoing-hover: #007c4b;
+  --bubble-pointer-outgoing: #005c4b;
+  --bubble-pointer-incoming: #2a3942;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --root-bg-color: #f0f2f5;
+  --app-container-bg-color: #ffffff;
+  --app-container-text-color: #1f2933;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f3f4f6;
+  --surface-tertiary: #e4e8ef;
+  --surface-border: #d1d5db;
+  --surface-elevated: #e5e7eb;
+  --surface-hover: rgba(79, 70, 229, 0.08);
+  --surface-active: rgba(79, 70, 229, 0.12);
+  --text-primary: #1f2933;
+  --text-secondary: #4b5563;
+  --text-inverse: #ffffff;
+  --accent: #4f46e5;
+  --accent-muted: rgba(79, 70, 229, 0.15);
+  --accent-active: rgba(79, 70, 229, 0.25);
+  --text-on-accent: #ffffff;
+  --tooltip-bg: #111827;
+  --tooltip-text: #f9fafb;
+  --input-bg: #ffffff;
+  --scrollbar-thumb: #cbd5f5;
+  --separator: rgba(15, 23, 42, 0.08);
+  --bubble-outgoing: #2563eb;
+  --bubble-incoming: #e0e7ff;
+  --bubble-outgoing-hover: #1d4ed8;
+  --bubble-pointer-outgoing: #2563eb;
+  --bubble-pointer-incoming: #e0e7ff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--root-bg-color);
+}
+
+* {
+  box-sizing: border-box;
+}
