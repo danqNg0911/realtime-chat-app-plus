@@ -7,6 +7,7 @@ import { useAppStore } from "../../../store";
 import { useSocket } from "../../../context/SocketContext";
 import upload from "../../../lib/upload";
 import { apiClient } from "../../../lib/api-client";
+import EmojiPicker from "emoji-picker-react";
 import {
   CHECK_BLOCK_STATUS_ROUTE,
   UNBLOCK_USER_ROUTE,
@@ -23,11 +24,13 @@ const SingleChatMessageBar = () => {
     setRefreshChatList,
     setActiveChatId,
     setPlaceholderMessage,
+    theme,
   } = useAppStore();
 
   const [message, setMessage] = useState("");
   const [iBlockedThem, setIBlockedThem] = useState(false);
   const [theyBlockedMe, setTheyBlockedMe] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const selectedChatId = selectedChatData?._id;
 
@@ -54,6 +57,7 @@ const SingleChatMessageBar = () => {
   }, [selectedChatId, selectedChatType]);
 
   const messageInputRef = useRef();
+  const emojiButtonRef = useRef();
 
   useEffect(() => {
     if (messageInputRef.current) {
@@ -163,6 +167,34 @@ const SingleChatMessageBar = () => {
     }
   };
 
+  const handleEmojiClick = (emojiData) => {
+    const emoji = emojiData?.emoji || "";
+    if (!emoji) return;
+    setMessage((prev) => `${prev}${emoji}`);
+    // Keep focus on the input after selecting
+    requestAnimationFrame(() => {
+      messageInputRef.current?.focus();
+    });
+  };
+
+  const toggleEmojiPicker = () => {
+    setShowEmojiPicker((prev) => !prev);
+  };
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!showEmojiPicker) return;
+      const btn = emojiButtonRef.current;
+      const picker = document.querySelector(".message-bar .emoji-picker");
+      if (btn && btn.contains(e.target)) return;
+      if (picker && picker.contains(e.target)) return;
+      setShowEmojiPicker(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showEmojiPicker]);
+
   if (iBlockedThem && selectedChatType === "contact") {
     return (
       <div className="unblock-bar">
@@ -183,11 +215,30 @@ const SingleChatMessageBar = () => {
 
   return (
     <div className="message-bar">
-      <div className="message-bar-icon currently-disabled-icon">
+      <button
+        type="button"
+        className="message-bar-icon"
+        onClick={toggleEmojiPicker}
+        ref={emojiButtonRef}
+      >
         <div className="emoji-picker-icon">
           <RiEmojiStickerLine />
         </div>
-      </div>
+        {showEmojiPicker && (
+          <div
+            className="emoji-picker"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <EmojiPicker
+              onEmojiClick={handleEmojiClick}
+              autoFocusSearch={false}
+              theme={theme === "dark" ? "dark" : "light"}
+            />
+          </div>
+        )}
+      </button>
       <button
         type="button"
         className="message-bar-icon"

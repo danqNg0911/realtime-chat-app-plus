@@ -67,6 +67,7 @@
   position: absolute;
   bottom: 4rem;
   left: 0;
+  z-index: 20;
 }
 
 .message-bar .attachment-hidden-input {

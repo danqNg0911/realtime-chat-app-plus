@@ -3,6 +3,8 @@ import AuthPage from "./pages/AuthPage";
 import ChatPage from "./pages/ChatPage";
 import ProfileLandingPage from "./pages/ProfileLandingPage";
 import Notification from "./components/Notification";
+import CallOverlay from "./components/Call/CallOverlay";
+import GroupCallOverlay from "./components/Call/GroupCallOverlay";
 import "./App.css";
 import { useAppStore } from "./store";
 import { useEffect, useState } from "react";
@@ -126,6 +128,8 @@ function App() {
       </BrowserRouter>
 
       <Notification />
+      <CallOverlay />
+      <GroupCallOverlay />
     </div>
   );
 }

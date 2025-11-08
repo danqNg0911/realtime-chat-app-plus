@@ -246,6 +246,7 @@ const SingleChatMessageContainer = () => {
 
   const renderDMMessages = (message) => (
     <div
+      id={`msg-${message._id}`}
       className={`message ${message.sender === selectedChatData._id
           ? "contact-message"
           : "own-message"
@@ -329,6 +330,7 @@ const SingleChatMessageContainer = () => {
 
     return (
       <div
+        id={`msg-${message._id}`}
         className={`message group-message ${message.sender._id === userInfo.id ? "own-message" : "contact-message"
           }`}
       >

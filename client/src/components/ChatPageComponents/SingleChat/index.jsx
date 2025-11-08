@@ -1,6 +1,7 @@
 import { useAppStore } from "../../../store";
 import SingleChatHeader from "../SingleChatHeader";
 import SingleChatMessageBar from "../SingleChatMessageBar";
+import ChatSearch from "../ChatSearch";
 import SingleChatMessageContainer from "../SingleChatMessageContainer";
 import ResetApp from "../ResetApp";
 import "./SingleChat.css";
@@ -14,6 +15,7 @@ const SingleChat = () => {
         <>
           <SingleChatHeader />
           <SingleChatMessageContainer />
+          <ChatSearch />
           <SingleChatMessageBar />
         </>
       ) : userInfo.isAdmin ? (

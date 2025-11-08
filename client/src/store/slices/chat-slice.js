@@ -5,6 +5,9 @@ export const createChatSlice = (set, get) => ({
   selectedChatData: undefined,
   selectedChatMessages: [],
   selectedChatMembers: [],
+  // In-chat search state
+  isChatSearchOpen: false,
+  setChatSearchOpen: (isOpen) => set({ isChatSearchOpen: isOpen }),
   unreadChatIds: [],
   unreadGroupIds: [],
   setSelectedChatMembers: (selectedChatMembers) => set({ selectedChatMembers }),

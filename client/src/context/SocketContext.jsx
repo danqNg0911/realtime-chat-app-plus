@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { useAppStore } from "../store";
+import { dmRoomName, joinLiveKitRoom, leaveLiveKitRoom } from "../lib/livekit";
 import { usePhotoStore } from "../store/slices/photo-slice";
 import { HOST } from "../utils/constants";
 import { toast } from "react-toastify";
+
 
 const SocketContext = createContext(null);
 
@@ -171,11 +173,40 @@ export const SocketProvider = ({ children }) => {
         removePhoto(data.photoId);
       };
 
+      // ===== Direct call signaling handlers =====
+      const handleIncomingCall = (data) => {
+        const { setCallStatus, setCallType, setCallPeerId, setCallId } = useAppStore.getState();
+        setCallType(data.callType);
+        setCallPeerId(data.from);
+        setCallId(data.callId);
+        setCallStatus("incoming");
+      };
+      const handleCallAccepted = (data) => {
+        const { setCallStatus, callType, userInfo: me } = useAppStore.getState();
+        setCallStatus("connecting");
+        const roomName = dmRoomName(me.id, data.from);
+        joinLiveKitRoom({ roomName, callType }).catch(() => {});
+      };
+      const handleCallRejected = () => {
+        const { resetCall } = useAppStore.getState();
+        resetCall();
+      };
+      const handleCallEnded = () => {
+        const { resetCall } = useAppStore.getState();
+        try { leaveLiveKitRoom(); } catch (_) {}
+        resetCall();
+      };
+
       socket.current.on("receiveMessage", handleReceiveMessage);
       socket.current.on("receiveGroupCreation", handleReceiveGroupCreation);
       socket.current.on("receiveGroupMessage", handleReceiveGroupMessage);
       socket.current.on("receiveFriendRequest", handleReceiveFriendRequest);
       socket.current.on("groupInfoUpdated", handleGroupInfoUpdated);
+
+      socket.current.on("call:incoming", handleIncomingCall);
+      socket.current.on("call:accepted", handleCallAccepted);
+      socket.current.on("call:rejected", handleCallRejected);
+      socket.current.on("call:ended", handleCallEnded);
 
       // Photo socket events
       socket.current.on("newPhotoUploaded", handleNewPhotoUploaded);
@@ -183,7 +214,33 @@ export const SocketProvider = ({ children }) => {
       socket.current.on("photoUnliked", handlePhotoUnliked);
       socket.current.on("photoDeleted", handlePhotoDeleted);
 
+      // ===== Group call events =====
+      const handleGroupIncoming = (data) => {
+        const { setGroupCallStatus, setGroupCallId, setCallType } = useAppStore.getState();
+        setCallType(data.callType);
+        setGroupCallId(data.groupId);
+        setGroupCallStatus("incoming");
+      };
+      const handleGroupEnded = (data) => {
+        const { resetGroupCall } = useAppStore.getState();
+        try { leaveLiveKitRoom(); } catch(_) {}
+        resetGroupCall();
+      };
+      socket.current.on("group:call:incoming", handleGroupIncoming);
+      socket.current.on("group:call:ended", handleGroupEnded);
+
       return () => {
+        try { socket.current.off("receiveMessage", handleReceiveMessage); } catch(_) {}
+        try { socket.current.off("receiveGroupCreation", handleReceiveGroupCreation); } catch(_) {}
+        try { socket.current.off("receiveGroupMessage", handleReceiveGroupMessage); } catch(_) {}
+        try { socket.current.off("receiveFriendRequest", handleReceiveFriendRequest); } catch(_) {}
+        try { socket.current.off("groupInfoUpdated", handleGroupInfoUpdated); } catch(_) {}
+        try { socket.current.off("call:incoming", handleIncomingCall); } catch(_) {}
+        try { socket.current.off("call:accepted", handleCallAccepted); } catch(_) {}
+        try { socket.current.off("call:rejected", handleCallRejected); } catch(_) {}
+        try { socket.current.off("call:ended", handleCallEnded); } catch(_) {}
+        try { socket.current.off("group:call:incoming", handleGroupIncoming); } catch(_) {}
+        try { socket.current.off("group:call:ended", handleGroupEnded); } catch(_) {}
         socket.current.disconnect();
       };
     }

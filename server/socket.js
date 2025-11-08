@@ -236,6 +236,7 @@ const setupSocket = (server) => {
       });
     }
   };
+  // (moved group call signaling into connection handler below)
   const createGroup = async (group) => {
     console.log(group);
     if (group && group.members) {
@@ -263,6 +264,109 @@ const setupSocket = (server) => {
     socket.on("sendFriendRequest", sendFriendRequest);
     socket.on("sendGroupMessage", sendGroupMessage);
     socket.on("createGroup", createGroup);
+
+    // === Direct call signaling (DM) ===
+    // Caller -> callee: incoming call offer
+    socket.on("call:offer", ({ to, callId, callType }) => {
+      try {
+        if (!to || !callId || !callType) return;
+        const recipientSocketId = userSocketMap.get(String(to));
+        if (recipientSocketId) {
+          io.to(recipientSocketId).emit("call:incoming", {
+            from: String(userId),
+            callId,
+            callType,
+          });
+        }
+      } catch (err) {
+        console.error("Call offer error:", err);
+      }
+    });
+
+    // === Group call signaling ===
+    socket.on("group:call:offer", async ({ groupId, callType }) => {
+      try {
+        if (!groupId) return;
+        const group = await Group.findById(groupId).lean();
+        if (!group || !group.members) return;
+        group.members.forEach((memberId) => {
+          const mid = memberId.toString();
+          if (mid === String(userId)) return; // skip caller
+          const sid = userSocketMap.get(mid);
+          if (sid) {
+            io.to(sid).emit("group:call:incoming", {
+              groupId: String(groupId),
+              from: String(userId),
+              callType,
+            });
+          }
+        });
+      } catch (err) {
+        console.error("group:call:offer error", err);
+      }
+    });
+
+    socket.on("group:call:end", async ({ groupId }) => {
+      try {
+        if (!groupId) return;
+        const group = await Group.findById(groupId).lean();
+        if (!group || !group.members) return;
+        group.members.forEach((memberId) => {
+          const sid = userSocketMap.get(memberId.toString());
+          if (sid) io.to(sid).emit("group:call:ended", { groupId: String(groupId) });
+        });
+      } catch (err) {
+        console.error("group:call:end error", err);
+      }
+    });
+
+    // Callee accepted -> notify caller
+    socket.on("call:accept", ({ to, callId }) => {
+      try {
+        if (!to || !callId) return;
+        const callerSocketId = userSocketMap.get(String(to));
+        if (callerSocketId) {
+          io.to(callerSocketId).emit("call:accepted", {
+            from: String(userId),
+            callId,
+          });
+        }
+      } catch (err) {
+        console.error("Call accept error:", err);
+      }
+    });
+
+    // Callee rejected -> notify caller
+    socket.on("call:reject", ({ to, callId }) => {
+      try {
+        if (!to || !callId) return;
+        const callerSocketId = userSocketMap.get(String(to));
+        if (callerSocketId) {
+          io.to(callerSocketId).emit("call:rejected", {
+            from: String(userId),
+            callId,
+          });
+        }
+      } catch (err) {
+        console.error("Call reject error:", err);
+      }
+    });
+
+    // Either side ended -> notify peer
+    socket.on("call:end", ({ to, callId }) => {
+      try {
+        if (!to || !callId) return;
+        const peerSocketId = userSocketMap.get(String(to));
+        if (peerSocketId) {
+          io.to(peerSocketId).emit("call:ended", {
+            from: String(userId),
+            callId,
+          });
+        }
+      } catch (err) {
+        console.error("Call end error:", err);
+      }
+    });
 
     // Photo events
     socket.on("photoUploaded", (photo) => {

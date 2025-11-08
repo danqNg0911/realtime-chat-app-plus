@@ -24,6 +24,7 @@ import friendRequestsRoutes from "./routes/FriendRequestsRoute.js";
 import aiRoutes from "./routes/AiRoutes.js";
 import blockRoutes from "./routes/BlockRoutes.js";
 import photoRoutes from "./routes/PhotoRoutes.js";
+import livekitRoutes from "./routes/LivekitRoutes.js";
 import { startPhotoCleanupJob } from "./services/photoCleanup.js";
 
 const app = express();
@@ -66,6 +67,7 @@ app.use("/api/friend-requests", friendRequestsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/block", blockRoutes);
 app.use("/api/photos", photoRoutes);
+app.use("/api/livekit", livekitRoutes);
 
 // Serve uploaded files (photos, avatars, etc.)
 app.use("/uploads", express.static(join(__dirname, "uploads")));

@@ -1,5 +1,5 @@
 import { IoMdMore } from "react-icons/io";
-import { IoIosSearch } from "react-icons/io";
+import { IoIosSearch, IoIosCall, IoIosVideocam } from "react-icons/io";
 import { IoPersonAdd } from "react-icons/io5";
 import "./SingleChatHeader.css";
 import { useAppStore } from "../../../store";
@@ -16,6 +16,8 @@ import { apiClient } from "../../../lib/api-client";
 import { HiUserGroup } from "react-icons/hi";
 import { toast } from "react-toastify";
 import AddMemberModal from "../AddMemberModal";
+import { useSocket } from "../../../context/SocketContext";
+import { joinLiveKitRoom, groupRoomName } from "../../../lib/livekit";
 
 const SingleChatHeader = () => {
   const {
@@ -32,7 +34,15 @@ const SingleChatHeader = () => {
     setDirectMessagesContacts,
     closeChat,
     setActiveChatId,
+    setChatSearchOpen,
+    setCallStatus,
+    setCallType,
+    setCallId,
+    setCallPeerId,
+    setGroupCallStatus,
+    setGroupCallId,
   } = useAppStore();
+  const socket = useSocket();
 
   const [showMenu, setShowMenu] = useState(false);
   const [showSnowfall, setShowSnowfall] = useState(false);
@@ -226,6 +236,29 @@ const SingleChatHeader = () => {
     setActiveIcon("contactOrGroupProfile");
   };
 
+  const startDmCall = (type) => {
+    if (selectedChatType !== "contact" || !selectedChatData?._id) return;
+    const peerId = selectedChatData._id;
+    const callId = (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`).toString();
+    setCallType(type);
+    setCallPeerId(peerId);
+    setCallId(callId);
+    setCallStatus("ringing");
+    socket?.emit("call:offer", { to: peerId, callId, callType: type });
+  };
+
+  const startGroupCall = (type) => {
+    if (selectedChatType !== "group" || !selectedChatData?._id) return;
+    const groupId = selectedChatData._id;
+    setCallType(type);
+    setGroupCallId(groupId);
+    setGroupCallStatus("ringing");
+    socket?.emit("group:call:offer", { groupId, callType: type });
+    // Caller joins room immediately
+    const roomName = groupRoomName(groupId);
+    joinLiveKitRoom({ roomName, callType: type }).catch(() => {});
+  };
+
   return (
     <div className="single-chat-header">
       <div className="user">
@@ -290,15 +323,36 @@ const SingleChatHeader = () => {
         <div></div>
       </div>
       <div className="icons">
-        {selectedChatType === "group" ? (
-          <div className="icon" onClick={() => setShowAddMemberModal(true)} title="Add Member">
-            <IoPersonAdd />
-          </div>
-        ) : (
-          <div className="icon currently-disabled-icon">
-            <IoIosSearch />
-          </div>
+        {selectedChatType === "group" && (
+          <>
+            <div className="icon" title="Voice call" onClick={() => startGroupCall("audio")}>
+              <IoIosCall />
+            </div>
+            <div className="icon" title="Video call" onClick={() => startGroupCall("video")}>
+              <IoIosVideocam />
+            </div>
+            <div className="icon" onClick={() => setShowAddMemberModal(true)} title="Add Member">
+              <IoPersonAdd />
+            </div>
+          </>
         )}
+        {selectedChatType === "contact" && (
+          <>
+            <div className="icon" title="Voice call" onClick={() => startDmCall("audio")}>
+              <IoIosCall />
+            </div>
+            <div className="icon" title="Video call" onClick={() => startDmCall("video")}>
+              <IoIosVideocam />
+            </div>
+          </>
+        )}
+        <div
+          className="icon"
+          title="Search in chat"
+          onClick={() => setChatSearchOpen(true)}
+        >
+          <IoIosSearch />
+        </div>
 
         {/* Hide menu icon if they blocked me */}
         {!theyBlockedMe && (
