@@ -1,4 +1,4 @@
-import { Room, Track, createLocalAudioTrack, createLocalVideoTrack } from "livekit-client";
+import { Room, Track, createLocalAudioTrack, createLocalVideoTrack, createLocalScreenTracks } from "livekit-client";
 import { apiClient } from "./api-client";
 import { useAppStore } from "../store";
 
@@ -82,4 +82,37 @@ export function leaveLiveKitRoom() {
     }
   } catch (_) {}
   room = undefined;
+}
+
+// Screen share helpers
+export async function startScreenShare({ withAudio = false } = {}) {
+  const r = ensureRoom();
+  // Create screen tracks (video + optional system audio)
+  const tracks = await createLocalScreenTracks({ audio: withAudio });
+  for (const t of tracks) {
+    await r.localParticipant.publishTrack(t);
+  }
+  // Merge into local preview stream for UI controls
+  const state = useAppStore.getState();
+  const current = state.localStream;
+  const merged = current ? new MediaStream(current.getTracks()) : new MediaStream();
+  tracks.forEach((t) => merged.addTrack(t.mediaStreamTrack));
+  state.setLocalStream(merged);
+  return tracks;
+}
+
+export function stopScreenShare() {
+  if (!room || !room.localParticipant) return;
+  const lp = room.localParticipant;
+  lp.trackPublications.forEach((pub) => {
+    try {
+      if (
+        pub.source === Track.Source.ScreenShare ||
+        pub.source === Track.Source.ScreenShareAudio
+      ) {
+        try { lp.unpublishTrack(pub.track); } catch (_) {}
+        try { pub.track?.stop(); } catch (_) {}
+      }
+    } catch (_) {}
+  });
 }

@@ -1,11 +1,14 @@
-.group-call-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000}
-.group-call-overlay .card{background:#1f2c34;color:#e9edef;border-radius:12px;padding:1rem 1.2rem;min-width:520px;max-width:900px;width:70%;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.group-call-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:1000}
+.group-call-overlay .card{background:transparent;color:#fff;border-radius:12px;padding:1rem 1.2rem;min-width:520px;max-width:900px;width:70%}
 .group-call-overlay .title{font-size:1.1rem;margin-bottom:.75rem;text-align:center}
 .group-call-overlay .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem;min-height:320px}
 .group-call-overlay .tile{background:#0b141a;border-radius:10px;position:relative;min-height:160px;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .group-call-overlay .tile video{width:100%;height:100%;object-fit:cover}
 .group-call-overlay .tile .name{position:absolute;left:.5rem;top:.4rem;opacity:.8;font-size:.85rem}
-.group-call-overlay .actions{display:flex;justify-content:center;gap:.75rem;margin-top:.9rem}
-.group-call-overlay .actions button{padding:.5rem 1rem;border-radius:8px;border:none;cursor:pointer}
-.group-call-overlay .actions .accept{background:#25D366;color:#0b141a}
-.group-call-overlay .actions .reject,.group-call-overlay .actions .end{background:#ef5350;color:#0b141a}
+.group-call-overlay .control-bar{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center;justify-content:center}
+.group-call-overlay .control-btn{width:56px;height:56px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;transition:transform .15s ease,background .15s ease,opacity .2s}
+.group-call-overlay .control-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.14)}
+.group-call-overlay .control-btn.danger{background:#ef5350;color:#0b141a}
+.group-call-overlay .control-btn.success{background:#25D366;color:#0b141a}
+.group-call-overlay .control-btn.disabled{opacity:.5;cursor:not-allowed}
+.group-call-overlay .control-btn .icon{font-size:24px}

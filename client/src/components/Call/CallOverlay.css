@@ -1,26 +1,52 @@
 .call-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 .call-card {
-  background: #1f2c34;
-  color: #e9edef;
+  background: transparent;
+  color: #fff;
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
-  width: 520px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  width: 100%;
+  max-width: 900px;
   text-align: center;
 }
-.call-title { font-size: 1.1rem; margin-bottom: 1rem; }
-.call-actions { display: flex; gap: 0.75rem; justify-content: center; }
-.call-actions button { padding: 0.5rem 1rem; border-radius: 8px; border: none; cursor: pointer; }
-.call-actions .accept { background: #25D366; color: #0b141a; }
-.call-actions .reject, .call-actions .end { background: #ef5350; color: #0b141a; }
+.call-title { font-size: 1.2rem; margin-bottom: 1rem; }
+
+/* Bottom control bar */
+.control-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+}
+.control-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, opacity .2s;
+}
+.control-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.14); }
+.control-btn.danger { background: #ef5350; color: #0b141a; }
+.control-btn.success { background: #25D366; color: #0b141a; }
+.control-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+.control-btn .icon { font-size: 24px; }
 
 .video-stage {
   position: relative;

@@ -3,6 +3,10 @@ import { useAppStore } from "../../store";
 import { useSocket } from "../../context/SocketContext";
 import "./CallOverlay.css";
 import { dmRoomName, joinLiveKitRoom, leaveLiveKitRoom } from "../../lib/livekit";
+import { MdCallEnd, MdScreenShare, MdCall } from "react-icons/md";
+import { IoPersonAdd } from "react-icons/io5";
+import { IoMic, IoMicOff, IoVideocam, IoVideocamOff } from "react-icons/io5";
+import { startScreenShare, stopScreenShare } from "../../lib/livekit";
 
 const CallOverlay = () => {
   const socket = useSocket();
@@ -25,6 +29,7 @@ const CallOverlay = () => {
   const remoteVideoRef = useRef();
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (localAudioRef.current && localStream) {
@@ -50,6 +55,7 @@ const CallOverlay = () => {
     if (socket && callPeerId && callId) {
       socket.emit("call:end", { callId, to: callPeerId });
     }
+    try { window.__ringStop?.(); } catch(_) {}
     try { leaveLiveKitRoom(); } catch (_) {}
     resetCall();
   };
@@ -59,6 +65,7 @@ const CallOverlay = () => {
       setCallStatus("connecting");
       socket.emit("call:accept", { callId, to: callPeerId });
     }
+    try { window.__ringStop?.(); } catch(_) {}
     // Callee joins LiveKit room immediately after accepting
     if (userInfo?.id && callPeerId) {
       const roomName = dmRoomName(userInfo.id, callPeerId);
@@ -70,6 +77,7 @@ const CallOverlay = () => {
     if (socket && callPeerId && callId) {
       socket.emit("call:reject", { callId, to: callPeerId });
     }
+    try { window.__ringStop?.(); } catch(_) {}
     resetCall();
   };
 
@@ -103,17 +111,47 @@ const CallOverlay = () => {
         )}
 
         {callStatus === "incoming" ? (
-          <div className="call-actions">
-            <button className="accept" onClick={acceptCall}>Accept</button>
-            <button className="reject" onClick={rejectCall}>Reject</button>
+          <div className="control-bar">
+            <button className="control-btn success" onClick={acceptCall} title="Accept">
+              <MdCall className="icon" />
+            </button>
+            <button className="control-btn danger" onClick={rejectCall} title="Reject">
+              <MdCallEnd className="icon" />
+            </button>
           </div>
         ) : (
-          <div className="call-actions">
-            <button onClick={toggleMic}>{micOn ? "Mute" : "Unmute"}</button>
+          <div className="control-bar">
+            <button
+              className={`control-btn ${sharing ? "success" : ""}`}
+              title={sharing ? "Stop sharing" : "Share screen"}
+              onClick={async () => {
+                try {
+                  if (sharing) {
+                    stopScreenShare();
+                    setSharing(false);
+                  } else {
+                    await startScreenShare({ withAudio: false });
+                    setSharing(true);
+                  }
+                } catch (_) {}
+              }}
+            >
+              <MdScreenShare className="icon" />
+            </button>
+            <button className="control-btn disabled" title="Add participant (coming soon)" disabled>
+              <IoPersonAdd className="icon" />
+            </button>
             {callType === "video" && (
-              <button onClick={toggleCam}>{camOn ? "Camera off" : "Camera on"}</button>
+              <button className="control-btn" onClick={toggleCam} title={camOn ? "Turn camera off" : "Turn camera on"}>
+                {camOn ? <IoVideocam className="icon" /> : <IoVideocamOff className="icon" />}
+              </button>
             )}
-            <button className="end" onClick={endCall}>End</button>
+            <button className="control-btn" onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}>
+              {micOn ? <IoMic className="icon" /> : <IoMicOff className="icon" />}
+            </button>
+            <button className="control-btn danger" onClick={endCall} title="End call">
+              <MdCallEnd className="icon" />
+            </button>
           </div>
         )}
 

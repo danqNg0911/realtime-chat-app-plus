@@ -17,6 +17,48 @@ export const SocketProvider = ({ children }) => {
   const socket = useRef();
   const { userInfo } = useAppStore();
 
+  // Ringtone helpers (simple Web Audio beeps)
+  const ringCtxRef = useRef(null);
+  const ringGainRef = useRef(null);
+  const ringTimerRef = useRef(null);
+  const startRinging = () => {
+    try {
+      if (ringCtxRef.current) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 800;
+      gain.gain.value = 0;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      ringCtxRef.current = { ctx, osc };
+      ringGainRef.current = gain;
+      let on = false;
+      ringTimerRef.current = setInterval(() => {
+        on = !on;
+        gain.gain.setTargetAtTime(on ? 0.07 : 0.0, ctx.currentTime, 0.01);
+      }, 900);
+      try { window.__ringStop = stopRinging; } catch(_) {}
+    } catch (_) {}
+  };
+  const stopRinging = () => {
+    try {
+      if (ringTimerRef.current) clearInterval(ringTimerRef.current);
+      ringTimerRef.current = null;
+      const bundle = ringCtxRef.current;
+      if (bundle) {
+        try { ringGainRef.current?.gain?.setValueAtTime(0, bundle.ctx.currentTime); } catch(_) {}
+        try { bundle.osc.stop(); } catch(_) {}
+        try { bundle.ctx.close(); } catch(_) {}
+      }
+    } catch (_) {}
+    ringCtxRef.current = null;
+    ringGainRef.current = null;
+    try { if (window.__ringStop) delete window.__ringStop; } catch(_) {}
+  };
+
   useEffect(() => {
     if (userInfo) {
       socket.current = io(HOST, {
@@ -180,19 +222,33 @@ export const SocketProvider = ({ children }) => {
         setCallPeerId(data.from);
         setCallId(data.callId);
         setCallStatus("incoming");
+        try { stopRinging(); startRinging(); } catch(_) {}
+        handleIncomingCall._toastId = toast.info("Incoming call", { autoClose: false, closeOnClick: false });
+        try {
+          if ("Notification" in window) {
+            if (Notification.permission === "granted") {
+              new Notification("Incoming call", { body: "Tap to open" });
+            } else if (Notification.permission === "default") {
+              Notification.requestPermission();
+            }
+          }
+        } catch(_) {}
       };
       const handleCallAccepted = (data) => {
         const { setCallStatus, callType, userInfo: me } = useAppStore.getState();
         setCallStatus("connecting");
+        try { stopRinging(); if (handleIncomingCall._toastId) toast.dismiss(handleIncomingCall._toastId); } catch(_) {}
         const roomName = dmRoomName(me.id, data.from);
         joinLiveKitRoom({ roomName, callType }).catch(() => {});
       };
       const handleCallRejected = () => {
         const { resetCall } = useAppStore.getState();
+        try { stopRinging(); if (handleIncomingCall._toastId) toast.dismiss(handleIncomingCall._toastId); } catch(_) {}
         resetCall();
       };
       const handleCallEnded = () => {
         const { resetCall } = useAppStore.getState();
+        try { stopRinging(); if (handleIncomingCall._toastId) toast.dismiss(handleIncomingCall._toastId); } catch(_) {}
         try { leaveLiveKitRoom(); } catch (_) {}
         resetCall();
       };
@@ -220,9 +276,12 @@ export const SocketProvider = ({ children }) => {
         setCallType(data.callType);
         setGroupCallId(data.groupId);
         setGroupCallStatus("incoming");
+        try { stopRinging(); startRinging(); } catch(_) {}
+        handleGroupIncoming._toastId = toast.info("Incoming group call", { autoClose: false, closeOnClick: false });
       };
       const handleGroupEnded = (data) => {
         const { resetGroupCall } = useAppStore.getState();
+        try { stopRinging(); if (handleGroupIncoming._toastId) toast.dismiss(handleGroupIncoming._toastId); } catch(_) {}
         try { leaveLiveKitRoom(); } catch(_) {}
         resetGroupCall();
       };
