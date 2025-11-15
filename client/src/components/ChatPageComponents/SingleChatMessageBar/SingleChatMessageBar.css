@@ -1,0 +1,130 @@
+.message-bar {
+  padding: 1rem;
+  height: 10%;
+  /* height: 80px; */
+  max-height: 80px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--surface-primary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--surface-border);
+}
+
+.message-bar .message-bar-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-bar .emoji-picker-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.message-bar .message-bar-icon:hover {
+  cursor: pointer;
+  border-radius: 50%;
+  background-color: var(--accent-muted);
+}
+
+.message-bar .message-bar-searchbar {
+  width: 85%;
+}
+
+.message-bar .message-bar-search-input {
+  background-color: var(--input-bg);
+  height: 2.5rem;
+  text-indent: 1rem;
+  border-radius: 10px;
+  color: var(--text-primary);
+  width: 100%;
+  border: 1px solid var(--surface-border);
+  outline: none;
+}
+
+.message-bar .message-bar-search-input:focus {
+  border: none;
+  outline: none;
+}
+
+.message-bar .message-bar-icon {
+  position: relative;
+}
+
+.message-bar button.message-bar-icon {
+  background-color: transparent;
+  border: none;
+  color: var(--text-primary);
+}
+
+.message-bar .emoji-picker {
+  position: absolute;
+  bottom: 4rem;
+  left: 0;
+  z-index: 20;
+}
+
+.message-bar .attachment-hidden-input {
+  display: none;
+}
+
+/* Unblock Bar */
+.unblock-bar {
+  padding: 1rem;
+  height: 10%;
+  max-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(153, 27, 27);
+  border-top: 1px solid var(--surface-border);
+}
+
+.unblock-bar .unblock-button {
+  padding: 0.75rem 2rem;
+  background-color: white;
+  color: rgb(153, 27, 27);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.unblock-bar .unblock-button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.unblock-bar .unblock-button:active {
+  transform: translateY(0);
+}
+
+/* Blocked Message Bar */
+.blocked-message-bar {
+  padding: 1rem;
+  height: 10%;
+  max-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(60, 60, 60);
+  border-top: 1px solid var(--surface-border);
+}
+
+.blocked-message-bar p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  margin: 0;
+  font-style: italic;
+}

@@ -1,0 +1,38 @@
+.settings-panel {
+  background-color: var(--panel-bg-color);
+  color: var(--app-container-text-color);
+  height: 100%;
+  width: 100%;
+  padding: 1rem;
+}
+
+.settings-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--panel-border-color);
+}
+
+.settings-section h3 {
+  margin: 0 0 0.75rem 0;
+}
+
+.theme-options {
+  display: flex;
+  gap: 1rem;
+}
+
+.theme-option {
+  background-color: var(--chip-bg-color);
+  color: var(--chip-text-color);
+  border: 1px solid var(--panel-border-color);
+  border-radius: 14px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.theme-option.selected {
+  background-color: var(--accent-bg-color);
+  color: var(--accent-text-color);
+  border-color: var(--accent-bg-color);
+}
+

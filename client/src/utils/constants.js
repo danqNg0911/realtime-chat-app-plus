@@ -1,0 +1,71 @@
+const FALLBACK_BROWSER_ORIGIN =
+	typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+
+const RAW_SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
+
+const deriveOrigin = (url) => {
+	try {
+		return new URL(url, FALLBACK_BROWSER_ORIGIN).origin;
+	} catch (error) {
+		console.warn("Unable to derive origin from", url, error);
+		return FALLBACK_BROWSER_ORIGIN;
+	}
+};
+
+export const HOST = RAW_SERVER_URL;
+export const SOCKET_HOST =
+	import.meta.env.VITE_SOCKET_URL || deriveOrigin(RAW_SERVER_URL);
+export const SOCKET_PATH = import.meta.env.VITE_SOCKET_PATH || "/socket.io";
+export const UPLOADS_HOST =
+	import.meta.env.VITE_UPLOAD_BASE || HOST;
+
+export const AUTH_ROUTES = "api/auth";
+export const SIGNUP_ROUTE = `${AUTH_ROUTES}/signup`;
+export const LOGIN_ROUTE = `${AUTH_ROUTES}/login`;
+export const GET_USER_INFO_ROUTE = `${AUTH_ROUTES}/user-info`;
+export const UPDATE_PROFILE_ROUTE = `${AUTH_ROUTES}/update-profile`;
+export const ADD_PROFILE_IMAGE_ROUTE = `${AUTH_ROUTES}/add-profile-image`;
+export const REMOVE_PROFILE_IMAGE_ROUTE = `${AUTH_ROUTES}/remove-profile-image`;
+export const LOGOUT_ROUTE = `${AUTH_ROUTES}/logout`;
+export const RESET_APP_ROUTE = `${AUTH_ROUTES}/reset-app`;
+export const CHANGE_PASSWORD_ROUTE = `${AUTH_ROUTES}/change-password`;
+export const DELETE_ACCOUNT_ROUTE = `${AUTH_ROUTES}/delete-account`;
+
+export const CONTACTS_ROUTES = "api/contacts";
+export const SEARCH_CONTACTS_ROUTE = `${CONTACTS_ROUTES}/search`;
+export const SEARCH_DM_CONTACTS_ROUTE = `${CONTACTS_ROUTES}/search-dm`;
+export const GET_DM_CONTACTS_ROUTE = `${CONTACTS_ROUTES}/get-contacts-for-dm`;
+export const GET_ALL_CONTACTS_ROUTE = `${CONTACTS_ROUTES}/get-all-contacts`;
+export const GET_CONTACT_FILES_ROUTE = `${CONTACTS_ROUTES}/get-contact-files`;
+export const UNFRIEND_CONTACT_ROUTE = `${CONTACTS_ROUTES}/unfriend`;
+
+export const MESSAGES_ROUTES = "api/messages";
+export const GET_ALL_MESSAGES_ROUTE = `${MESSAGES_ROUTES}/get-messages`;
+
+export const FRIEND_REQUEST_ROUTES = "api/friend-requests";
+export const GET_FRIEND_REQUESTS_ROUTE = `${FRIEND_REQUEST_ROUTES}/get-friend-requests`;
+export const CREATE_FRIEND_REQUEST_ROUTE = `${FRIEND_REQUEST_ROUTES}/create-friend-request`;
+export const ACCEPT_FRIEND_REQUEST_ROUTE = `${FRIEND_REQUEST_ROUTES}/accept-friend-request`;
+export const REJECT_FRIEND_REQUEST_ROUTE = `${FRIEND_REQUEST_ROUTES}/reject-friend-request`;
+export const SEARCH_FRIEND_REQUESTS_ROUTE = `${FRIEND_REQUEST_ROUTES}/search-friend-requests`;
+
+export const GROUP_ROUTES = "api/groups";
+export const CREATE_GROUP_ROUTE = `${GROUP_ROUTES}/create-group`;
+export const GET_USER_GROUPS_ROUTE = `${GROUP_ROUTES}/get-user-groups`;
+export const GET_GROUPS_IN_COMMON_ROUTE = `${GROUP_ROUTES}/get-groups-in-common`;
+export const GET_GROUP_MESSAGES_ROUTE = `${GROUP_ROUTES}/get-group-messages`;
+export const GET_GROUP_MEMBERS_ROUTE = `${GROUP_ROUTES}/get-group-members`;
+export const SEARCH_GROUPS_ROUTE = `${GROUP_ROUTES}/search-groups`;
+export const GET_GROUP_FILES_ROUTE = `${GROUP_ROUTES}/get-group-files`;
+export const LEAVE_GROUP_ROUTE = `${GROUP_ROUTES}/leave-group`;
+export const UPDATE_GROUP_INFO_ROUTE = `${GROUP_ROUTES}/update-group-info`;
+export const ADD_MEMBER_TO_GROUP_ROUTE = `${GROUP_ROUTES}/add-member`;
+
+export const BLOCK_ROUTES = "api/block";
+export const BLOCK_USER_ROUTE = `${BLOCK_ROUTES}/block-user`;
+export const UNBLOCK_USER_ROUTE = `${BLOCK_ROUTES}/unblock-user`;
+export const GET_BLOCKED_USERS_ROUTE = `${BLOCK_ROUTES}/blocked-users`;
+export const CHECK_BLOCK_STATUS_ROUTE = `${BLOCK_ROUTES}/check-block-status`;
+
+export const AI_ROUTES = "api/ai";
+export const GET_AI_ASSISTANT_PROFILE_ROUTE = `${AI_ROUTES}/assistant-profile`;

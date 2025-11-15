@@ -1,0 +1,28 @@
+.chat-search {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  background: #1f2c34;
+  color: #e9edef;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  z-index: 50;
+}
+.chat-search input {
+  background: #2a3942;
+  border: none;
+  outline: none;
+  color: #e9edef;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+}
+.chat-search .count { opacity: 0.8; font-size: 0.85rem; }
+.chat-search button { background: #415763; color: #e9edef; border: none; border-radius: 6px; padding: 0.3rem 0.5rem; cursor: pointer; }
+.chat-search button.close { background: transparent; font-size: 1rem; }
+
+.message.search-highlight .message-content { outline: 2px solid #25D366; }
+
