@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: client:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: VITE_SERVER_URL
+              value: "http://api-gateway:3001"
+            - name: VITE_SOCKET_URL
+              value: "http://api-gateway:3001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client
+  namespace: default
+spec:
+  selector:
+    app: client
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80

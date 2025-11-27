@@ -1,0 +1,10 @@
+resources:
+  - mongo.yaml
+  - redis.yaml
+  - configmap.yaml
+  - secret.yaml
+  - api-gateway.yaml
+  - auth-user-service.yaml
+  - chat-service.yaml
+  - media-ai-service.yaml
+  - client.yaml

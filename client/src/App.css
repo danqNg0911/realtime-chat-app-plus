@@ -1,0 +1,37 @@
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background-color: var(--root-bg-color);
+}
+
+.app {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--app-container-bg-color);
+  color: var(--app-container-text-color);
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.currently-disabled-icon {
+  opacity: 0.1;
+  pointer-events: none;
+  /* cursor: not-allowed; */
+}
+
+.app-loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.5;
+  height: 100%;
+  width: 100%;
+  font-size: 4rem;
+  color: #8696a0;
+}

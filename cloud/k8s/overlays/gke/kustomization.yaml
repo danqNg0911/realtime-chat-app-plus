@@ -1,0 +1,6 @@
+resources:
+  - ../../base
+patches:
+  - path: patch-images.yaml
+  - path: patch-services.yaml
+  - path: patch-resources.yaml

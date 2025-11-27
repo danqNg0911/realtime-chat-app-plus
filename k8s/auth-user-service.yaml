@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-user-service
+  template:
+    metadata:
+      labels:
+        app: auth-user-service
+    spec:
+      containers:
+        - name: auth-user-service
+          image: auth-user-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4001
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-user-service
+spec:
+  selector:
+    app: auth-user-service
+  type: ClusterIP
+  ports:
+    - port: 4001
+      targetPort: 4001

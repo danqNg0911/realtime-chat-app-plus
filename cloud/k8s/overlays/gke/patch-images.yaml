@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: api-gateway
+          image: asia-southeast1-docker.pkg.dev/app-chat-478713/chat/api-gateway:latest
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-user-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: auth-user-service
+          image: asia-southeast1-docker.pkg.dev/app-chat-478713/chat/auth-user-service:latest
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: chat-service
+          image: asia-southeast1-docker.pkg.dev/app-chat-478713/chat/chat-service:latest
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: media-ai-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: media-ai-service
+          image: asia-southeast1-docker.pkg.dev/app-chat-478713/chat/media-ai-service:latest
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+spec:
+  template:
+    spec:
+      containers:
+        - name: client
+          image: asia-southeast1-docker.pkg.dev/app-chat-478713/chat/client:latest

@@ -1,0 +1,55 @@
+.vietnam-flag-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.flag-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%,
+            rgba(218, 37, 29, 0.1) 0%,
+            transparent 60%);
+    animation: flagPulse 3s ease-in-out infinite;
+}
+
+@keyframes flagPulse {
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.05);
+    }
+}
+
+.vietnam-star {
+    position: absolute;
+    top: -30px;
+    color: #FFCD00;
+    text-shadow: 0 0 10px rgba(255, 205, 0, 0.8),
+        0 0 20px rgba(218, 37, 29, 0.6);
+    animation: starFall linear forwards;
+    -webkit-user-select: none;
+    user-select: none;
+    filter: drop-shadow(0 0 5px rgba(218, 37, 29, 0.8));
+}
+
+@keyframes starFall {
+    to {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
