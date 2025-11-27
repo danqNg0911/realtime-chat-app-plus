@@ -1,0 +1,8 @@
+docker build -t client:latest ./client
+docker build -t api-gateway:latest ./services/api-gateway
+docker build -t auth-user-service:latest ./services/auth-user-service
+docker build -t chat-service:latest ./services/chat-service
+docker build -t media-ai-service:latest ./services/media-ai-service
+
+kubectl apply -f k8s/
+
