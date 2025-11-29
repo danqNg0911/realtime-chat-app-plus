@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { apiClient } from "../../lib/api-client";
 import { LOGIN_ROUTE, SIGNUP_ROUTE } from "../../utils/constants";
 import { FaGoogle, FaGithub } from "react-icons/fa";
+import { saveAuthToken } from "../../lib/auth-token";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -103,6 +104,9 @@ const AuthPage = () => {
           { withCredentials: true }
         );
         if (response.data.user.id) {
+          if (response.data.token) {
+            saveAuthToken(response.data.token);
+          }
           setUserInfo(response.data.user);
           if (response.data.user.profileSetup) {
             navigate("/chat");
@@ -137,6 +141,9 @@ const AuthPage = () => {
           { withCredentials: true }
         );
         if (response.status === 201) {
+          if (response.data.token) {
+            saveAuthToken(response.data.token);
+          }
           setUserInfo(response.data.user);
           navigate("/profile");
           toast.success("Signup successful");

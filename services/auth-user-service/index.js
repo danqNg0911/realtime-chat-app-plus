@@ -8,6 +8,7 @@ import passport from "./config/passport.js";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import corsMiddleware from "./cors.js";
+import { authCookieOptions } from "./utils/cookies.js";
 
 import authRoutes from "./routes/AuthRoutes.js";
 import contactRoutes from "./routes/ContactRoutes.js";
@@ -30,9 +31,10 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: authCookieOptions.secure,
+      sameSite: authCookieOptions.sameSite,
+      maxAge: authCookieOptions.maxAge,
+      httpOnly: true,
     },
   })
 );

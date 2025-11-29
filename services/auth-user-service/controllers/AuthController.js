@@ -6,8 +6,11 @@ import Group from "../models/GroupModel.js";
 import Message from "../models/MessageModel.js";
 import jwt from "jsonwebtoken";
 import { renameSync, unlinkSync } from "fs";
-
-const maxAge = 3 * 24 * 60 * 60 * 1000;
+import {
+  authCookieMaxAge as maxAge,
+  authCookieOptions,
+  clearAuthCookieOptions,
+} from "../utils/cookies.js";
 
 const adminEmail = process.env.ADMIN_EMAIL;
 const resetLowerLimit = process.env.RESET_LOWER_LIMIT;
@@ -49,14 +52,10 @@ export const signup = async (request, response, next) => {
       salt: salt,
       authProvider: "local",
     });
-    response.cookie("jwt", createToken(email, user.id), {
-      maxAge,
-      // localhost:30080 <-> localhost:30011 are same-site; use Lax to avoid Secure requirement
-      sameSite: "Lax",
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-    });
+    const token = createToken(email, user.id);
+    response.cookie("jwt", token, authCookieOptions);
     return response.status(201).json({
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -104,13 +103,10 @@ export const login = async (request, response, next) => {
       return response.status(400).json({ error: "Incorrect password" });
     }
 
-    response.cookie("jwt", createToken(email, user.id), {
-      maxAge,
-      sameSite: "Lax",
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-    });
+    const token = createToken(email, user.id);
+    response.cookie("jwt", token, authCookieOptions);
     return response.status(200).json({
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -134,12 +130,7 @@ export const getUserInfo = async (request, response, next) => {
     const userData = await User.findById(request.userId);
     if (!userData) {
       // Treat missing user as unauthorized to avoid confusing 404s on client
-      response.cookie("jwt", "", {
-        maxAge: 1,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-        httpOnly: true,
-      });
+      response.cookie("jwt", "", clearAuthCookieOptions);
       return response.status(401).json({ error: "Unauthorized" });
     }
     return response.status(200).json({
@@ -193,12 +184,7 @@ export const updateProfile = async (request, response, next) => {
 
 export const logout = async (request, response, next) => {
   try {
-    response.cookie("jwt", "", {
-      maxAge: 1,
-      sameSite: "Lax",
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-    });
+    response.cookie("jwt", "", clearAuthCookieOptions);
 
     return response.status(200).json({
       message: "Logged out successfully",
@@ -340,12 +326,7 @@ export const deleteAccount = async (request, response, next) => {
 
     await User.findByIdAndDelete(userId);
 
-    response.cookie("jwt", "", {
-      maxAge: 1,
-      sameSite: "Lax",
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-    });
+    response.cookie("jwt", "", clearAuthCookieOptions);
 
     return response.status(200).json({
       message: "Account deleted successfully",

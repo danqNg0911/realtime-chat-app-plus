@@ -10,5 +10,6 @@ COPY controllers/ ./controllers
 COPY middlewares/ ./middlewares
 COPY models/ ./models
 COPY routes/ ./routes
+COPY utils/ ./utils
 EXPOSE 4001
 CMD ["node", "index.js"]

@@ -1,6 +1,4 @@
 resources:
-  - mongo.yaml
-  - redis.yaml
   - configmap.yaml
   - secret.yaml
   - api-gateway.yaml

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "./lib/api-client";
 import { GET_USER_INFO_ROUTE } from "./utils/constants";
 import { toast } from "react-toastify";
+import { clearAuthToken } from "./lib/auth-token";
 
 const AuthRoute = ({ children }) => {
   const { userInfo } = useAppStore();
@@ -77,6 +78,7 @@ function App() {
         // Treat auth-related errors as unauthenticated without noisy toast
         if (status === 401 || status === 403 || status === 404) {
           setUserInfo(undefined);
+          clearAuthToken();
         } else {
           console.error(error);
           toast.error(error.message);

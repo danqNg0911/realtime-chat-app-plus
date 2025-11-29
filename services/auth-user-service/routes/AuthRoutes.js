@@ -14,9 +14,12 @@ import { verifyToken } from "../middlewares/AuthMiddleware.js";
 import passport from "../config/passport.js";
 import jwt from "jsonwebtoken";
 import { getPrimaryOrigin } from "../cors.js";
+import {
+  authCookieMaxAge as maxAge,
+  authCookieOptions,
+} from "../utils/cookies.js";
 
 const authRoutes = Router();
-const maxAge = 3 * 24 * 60 * 60 * 1000;
 const frontendOrigin = getPrimaryOrigin();
 
 const createToken = (email, userId) =>
@@ -70,12 +73,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       }
 
       const token = createToken(req.user.email, req.user.id);
-      res.cookie("jwt", token, {
-        maxAge,
-        sameSite: "Lax",
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-      });
+      res.cookie("jwt", token, authCookieOptions);
 
       if (req.user.profileSetup) {
         res.redirect(`${frontendOrigin}/chat`);
@@ -117,12 +115,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
       }
 
       const token = createToken(req.user.email, req.user.id);
-      res.cookie("jwt", token, {
-        maxAge,
-        sameSite: "Lax",
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-      });
+      res.cookie("jwt", token, authCookieOptions);
 
       if (req.user.profileSetup) {
         res.redirect(`${frontendOrigin}/chat`);

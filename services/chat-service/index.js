@@ -14,7 +14,7 @@ import setupSocket from "./socket.js";
 
 const app = express();
 const server = http.createServer(app);
-  const PORT = Number(process.env.PORT) || 4002;
+const PORT = process.env.CHAT_SERVICE_PORT || 4002;
 
 app.use(corsMiddleware);
 app.use(express.json());

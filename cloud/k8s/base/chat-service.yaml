@@ -4,7 +4,7 @@ metadata:
   name: chat-service
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: chat-service
@@ -15,15 +15,30 @@ spec:
     spec:
       containers:
         - name: chat-service
-          image: chat-service:latest
-          imagePullPolicy: IfNotPresent
+          image: asia-southeast1-docker.pkg.dev/app-chat-478713/chat/chat-service:latest
+          imagePullPolicy: Always
+
           ports:
             - containerPort: 4002
+
+          env:
+            - name: PORT
+              value: "4002"
+
           envFrom:
             - configMapRef:
                 name: app-config
             - secretRef:
                 name: app-secret
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "1Gi"
+            limits:
+              cpu: "500m"
+              memory: "2Gi"
+
 ---
 apiVersion: v1
 kind: Service
@@ -35,5 +50,7 @@ spec:
     app: chat-service
   type: ClusterIP
   ports:
-    - port: 4002
+    - name: http
+      protocol: TCP
+      port: 4002
       targetPort: 4002

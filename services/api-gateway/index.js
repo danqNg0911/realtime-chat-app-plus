@@ -14,18 +14,10 @@ const __dirname = dirname(__filename);
 
 dotenv.config({ path: resolve(__dirname, "..", ".env") });
 
-process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled rejection in gateway:", reason);
-});
-
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught exception in gateway:", error);
-});
-
 const PORT = process.env.GATEWAY_PORT || 3001;
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://auth-user-service:4001";
-const CHAT_SERVICE_URL = process.env.CHAT_SERVICE_URL || "http://chat-service:4002";
-const MEDIA_SERVICE_URL = process.env.MEDIA_SERVICE_URL || "http://media-ai-service:4003";
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
+const CHAT_SERVICE_URL = process.env.CHAT_SERVICE_URL;
+const MEDIA_SERVICE_URL = process.env.MEDIA_SERVICE_URL;
 
 console.log("Gateway targets", {
   auth: AUTH_SERVICE_URL,
@@ -44,48 +36,69 @@ app.use(
 app.use(cors(buildCorsOptions()));
 app.use("/api", morgan("dev"));
 
-const proxyTo = (target, options = {}) => {
-  const baseOptions = {
+const createFullPathProxy = (target, label) => {
+  const proxy = createProxyMiddleware({
     target,
     changeOrigin: true,
-    proxyTimeout: 60_000,
-  };
-
-  if (!options.pathRewrite) {
-    baseOptions.pathRewrite = (path, req) => req.originalUrl;
-  }
-
-  return createProxyMiddleware({
-    ...baseOptions,
-    ...options,
+    proxyTimeout: 60000,
+    logLevel: "warn",
+    onError(err, req) {
+      console.error(
+        `[proxy:${label}] ${req.method} ${req.originalUrl || req.url} -> ${target} failed:`,
+        err.message
+      );
+    },
+    onProxyReq(proxyReq, req) {
+      if (process.env.DEBUG_PROXY === "true") {
+        console.log(
+          `[proxy:${label}] ${req.method} ${req.originalUrl || req.url} -> ${
+            proxyReq.getHeader("host") || target
+          }${proxyReq.path}`
+        );
+      }
+    },
   });
+
+  return (req, res, next) => {
+    req.url = req.originalUrl || req.url;
+    return proxy(req, res, next);
+  };
 };
 
-// Auth & User related routes
-app.use("/api/auth", proxyTo(AUTH_SERVICE_URL));
-app.use("/api/contacts", proxyTo(AUTH_SERVICE_URL));
-app.use("/api/friend-requests", proxyTo(AUTH_SERVICE_URL));
-app.use("/api/block", proxyTo(AUTH_SERVICE_URL));
+/* ---------------------- AUTH SERVICE ---------------------- */
+const authProxy = createFullPathProxy(AUTH_SERVICE_URL, "auth");
 
-// Chat related routes (messages, groups, livekit)
-app.use("/api/messages", proxyTo(CHAT_SERVICE_URL));
-app.use("/api/groups", proxyTo(CHAT_SERVICE_URL));
-app.use("/api/livekit", proxyTo(CHAT_SERVICE_URL));
+app.use("/api/auth", authProxy);
+app.use("/api/contacts", authProxy);
+app.use("/api/friend-requests", authProxy);
+app.use("/api/block", authProxy);
 
-// Media & AI routes
-app.use("/api/photos", proxyTo(MEDIA_SERVICE_URL));
-app.use("/api/ai", proxyTo(MEDIA_SERVICE_URL));
-app.use("/uploads", proxyTo(MEDIA_SERVICE_URL));
+/* ---------------------- CHAT SERVICE ---------------------- */
+const chatProxy = createFullPathProxy(CHAT_SERVICE_URL, "chat");
+app.use("/api/messages", chatProxy);
+app.use("/api/groups", chatProxy);
+app.use("/api/livekit", chatProxy);
 
-// Socket.io proxy to chat service
+/* ---------------------- MEDIA SERVICE ---------------------- */
+const mediaProxy = createFullPathProxy(MEDIA_SERVICE_URL, "media");
+app.use("/api/photos", mediaProxy);
+app.use("/api/ai", mediaProxy);
+app.use("/uploads", mediaProxy);
+
+/* ---------------------- SOCKET PROXY ---------------------- */
 const socketProxy = createProxyMiddleware({
   target: CHAT_SERVICE_URL,
   changeOrigin: true,
   ws: true,
-  proxyTimeout: 60_000,
+  proxyTimeout: 60000,
+  logLevel: "warn",
 });
-app.use("/socket.io", socketProxy);
+app.use("/socket.io", (req, res, next) => {
+  req.url = req.originalUrl || req.url;
+  socketProxy(req, res, next);
+});
 
+/* ---------------------- HEALTH ---------------------- */
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -98,8 +111,8 @@ app.get("/health", (req, res) => {
   });
 });
 
+/* ---------------------- START ---------------------- */
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`🌀 API Gateway running on 0.0.0.0:${PORT}`);
 });
-
 server.on("upgrade", socketProxy.upgrade);

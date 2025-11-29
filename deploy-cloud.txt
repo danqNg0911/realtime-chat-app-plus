@@ -1,0 +1,118 @@
+:: ================================
+:: DELETE ALL PODS (cẩn thận khi dùng)
+:: ================================
+kubectl delete all --all -n default
+kubectl delete configmap --all -n default
+kubectl delete secret --all -n default
+kubectl delete pvc --all
+kubectl delete pv --all
+
+
+:: ================================
+:: ENV + PROJECT CONFIG (chạy 1 lần)
+:: ================================
+set PROJECT_ID=app-chat-478713
+set REGION=asia-southeast1
+set PROJECT_NUMBER=37387478146 
+set REPO_NAME=chat
+set AR=%REGION%-docker.pkg.dev/%PROJECT_ID%/%REPO_NAME%
+
+:: ================================
+:: CHECK PROJECT NUMBER (chạy 1 lần, nếu chưa có)
+:: ================================
+gcloud projects describe %PROJECT_ID% --format="value(projectNumber)"
+
+
+:: ================================
+:: STATIC IP (chạy 1 lần, sửa ip trong file cloud/k8s/base/client.yaml, cloud/k8s/base/api-gateway.yaml, cloud/k8s/base/secret.yaml, cloud/k8s/base/configmap.yaml)
+:: ================================
+gcloud compute addresses create chat-client-ip --region=asia-southeast1
+gcloud compute addresses create chat-gateway-ip --region=asia-southeast1
+gcloud compute addresses list
+
+
+:: ================================
+:: CREATE ARTIFACT REGISTRY (chạy 1 lần)
+:: ================================
+gcloud artifacts repositories create %REPO_NAME% ^
+  --repository-format=docker ^
+  --location=%REGION%
+
+
+:: ================================
+:: ENABLE WORKLOAD IDENTITY (chạy 1 lần)
+:: ================================
+gcloud container clusters update realtime-chat-autopilot-1 ^
+  --region=%REGION% ^
+  --workload-pool=%PROJECT_ID%.svc.id.goog
+
+
+
+
+:: ================================
+:: AUTH DOCKER → Artifact Registry
+:: ================================
+gcloud auth configure-docker %REGION%-docker.pkg.dev
+
+:: ================================
+:: ASSIGN IAM ROLE FOR GKE NODES
+:: (Cực kỳ quan trọng để GKE pull image)
+:: ================================
+gcloud projects add-iam-policy-binding %PROJECT_ID% ^
+  --member="serviceAccount:%PROJECT_NUMBER%-compute@developer.gserviceaccount.com" ^
+  --role="roles/artifactregistry.reader"
+
+gcloud projects add-iam-policy-binding %PROJECT_ID% ^
+  --member="serviceAccount:service-%PROJECT_NUMBER%@container-engine-robot.iam.gserviceaccount.com" ^
+  --role="roles/artifactregistry.reader"
+
+:: ================================
+:: BUILD & PUSH MICROSERVICES
+:: ================================
+
+docker build -t %AR%/api-gateway:latest services/api-gateway
+docker push %AR%/api-gateway:latest
+
+docker build -t %AR%/auth-user-service:latest services/auth-user-service
+docker push %AR%/auth-user-service:latest
+
+docker build -t %AR%/chat-service:latest services/chat-service
+docker push %AR%/chat-service:latest
+
+docker build -t %AR%/media-ai-service:latest services/media-ai-service
+docker push %AR%/media-ai-service:latest
+
+:: ================================
+:: BUILD CLIENT (NGINX) CHUẨN PROD
+:: ================================
+docker build -t %AR%/client:latest ./client
+docker push %AR%/client:latest
+
+:: ================================
+:: CONNECT GKE
+:: ================================
+gcloud container clusters get-credentials realtime-chat-autopilot-1 ^
+  --region=%REGION% ^
+  --project=%PROJECT_ID%
+
+:: ================================
+:: APPLY KUSTOMIZE OVERLAY
+:: ================================
+kubectl apply -k cloud/k8s/overlays/gke
+
+:: ================================
+:: RESTART DEPLOYMENTS
+:: ================================
+kubectl rollout restart deploy/api-gateway
+kubectl rollout restart deploy/auth-user-service
+kubectl rollout restart deploy/chat-service
+kubectl rollout restart deploy/media-ai-service
+kubectl rollout restart deploy/client
+
+:: ================================
+:: CHECK POD STATUS
+:: ================================
+kubectl get pods -A
+
+
+

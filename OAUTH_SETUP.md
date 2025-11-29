@@ -10,7 +10,7 @@ This application now supports OAuth2 authentication with Google, Facebook, and G
 
 ## Setup Instructions
 
-### 1. Google OAuth2
+### Google OAuth2
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing one
@@ -18,37 +18,22 @@ This application now supports OAuth2 authentication with Google, Facebook, and G
 4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
 5. Configure OAuth consent screen
 6. Set Authorized redirect URIs:
-   - `http://localhost:3001/api/auth/google/callback` (development)
-   - `https://yourdomain.com/api/auth/google/callback` (production)
+   - `http://34.142.152.144/api/auth/google/callback` (cloud static IP)
+   - `http://localhost:3001/api/auth/google/callback` (local development)
 7. Copy Client ID and Client Secret to `.env`:
    ```
    GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
    GOOGLE_CLIENT_SECRET=your-client-secret
    ```
 
-### 2. Facebook OAuth2
-
-1. Go to [Facebook Developers](https://developers.facebook.com/)
-2. Create a new app or select existing one
-3. Add "Facebook Login" product
-4. Go to Settings → Basic
-5. Set Valid OAuth Redirect URIs:
-   - `http://localhost:3001/api/auth/facebook/callback` (development)
-   - `https://yourdomain.com/api/auth/facebook/callback` (production)
-6. Copy App ID and App Secret to `.env`:
-   ```
-   FACEBOOK_APP_ID=your-app-id
-   FACEBOOK_APP_SECRET=your-app-secret
-   ```
-
-### 3. GitHub OAuth2
+###  GitHub OAuth2
 
 1. Go to [GitHub Settings → Developer settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Fill in application details:
    - Application name: Your App Name
    - Homepage URL: `http://localhost:3000` (or your domain)
-   - Authorization callback URL: `http://localhost:3001/api/auth/github/callback`
+   - Authorization callback URL: `http://<your-domain>/api/auth/github/callback`
 4. Copy Client ID and Client Secret to `.env`:
    ```
    GITHUB_CLIENT_ID=your-client-id
@@ -57,11 +42,11 @@ This application now supports OAuth2 authentication with Google, Facebook, and G
 
 ### 4. Update Environment Variables
 
-Edit `services/.env`:
+For cloud deployment, update `cloud/k8s/base/secret.yaml` and `cloud/k8s/base/configmap.yaml`:
 
 ```env
 # Server URL (important for OAuth callbacks)
-SERVER_URL=http://localhost:3001
+SERVER_URL=http://34.142.152.144
 
 # Session Secret (generate a random string)
 SESSION_SECRET=your-random-session-secret
@@ -69,23 +54,62 @@ SESSION_SECRET=your-random-session-secret
 # Google OAuth2
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://34.142.152.144/api/auth/google/callback
 
 # Facebook OAuth2
 FACEBOOK_APP_ID=your-facebook-app-id
 FACEBOOK_APP_SECRET=your-facebook-app-secret
+FACEBOOK_CALLBACK_URL=http://34.142.152.144/api/auth/facebook/callback
 
 # GitHub OAuth2
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_CALLBACK_URL=http://34.142.152.144/api/auth/github/callback
 ```
 
 ### 5. Update Client Environment (Optional)
 
-If your server is not at `http://localhost:3001`, create `client/.env`:
+For cloud deployment, set in `cloud/k8s/base/configmap.yaml`:
 
 ```env
-VITE_SERVER_URL=http://localhost:3001
+VITE_SERVER_URL=http://34.142.152.144
 ```
+
+## Cloud Deployment Steps
+
+1. Reserve static IPs for API Gateway and Client:
+   ```cmd
+   gcloud compute addresses create chat-gateway-ip --region=asia-southeast1
+   gcloud compute addresses create chat-client-ip --region=asia-southeast1
+   gcloud compute addresses list
+   ```
+2. Update all callback URLs and envs in `cloud/k8s/base/secret.yaml` and `cloud/k8s/base/configmap.yaml` to use the static IPs (e.g., `http://34.142.152.144`).
+3. Build and push Docker images to Artifact Registry:
+   ```cmd
+   docker build -t <AR>/api-gateway:latest services/api-gateway
+   docker push <AR>/api-gateway:latest
+   ...
+   docker build -t <AR>/client:latest ./client
+   docker push <AR>/client:latest
+   ```
+4. Connect to GKE cluster:
+   ```cmd
+   gcloud container clusters get-credentials realtime-chat-autopilot-1 --region=asia-southeast1 --project=app-chat-478713
+   ```
+5. Apply kustomize overlay:
+   ```cmd
+   kubectl apply -k cloud/k8s/overlays/gke
+   ```
+6. Restart deployments:
+   ```cmd
+   kubectl rollout restart deploy/api-gateway
+   kubectl rollout restart deploy/client
+   ...
+   ```
+7. Check pod status:
+   ```cmd
+   kubectl get pods -A
+   ```
 
 ## How It Works
 

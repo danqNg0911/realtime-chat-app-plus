@@ -1,8 +1,11 @@
 const DEFAULT_ORIGINS = [
-  "http://localhost:5173", // Vite dev
-  "http://localhost:3000", // React default
-  "http://localhost:30080", // k8s NodePort for client
+  "http://34.142.252.236",         // FE LoadBalancer
+  "http://34.87.94.25:3001",       // API Gateway LB
+  "http://localhost:5173",         // Vite dev
+  "http://localhost:3000",         // React default
+  "http://localhost:30080",        // k8s NodePort for client
 ];
+
 
 const toArray = (input) => {
   if (!input) {

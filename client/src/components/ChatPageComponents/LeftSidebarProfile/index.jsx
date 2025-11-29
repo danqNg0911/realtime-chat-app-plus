@@ -11,6 +11,7 @@ import {
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import upload from "../../../lib/upload";
+import { clearAuthToken } from "../../../lib/auth-token";
 
 const LeftSidebarProfile = () => {
   const [activeFilter, setActiveFilter] = useState("all");
@@ -127,6 +128,7 @@ const LeftSidebarProfile = () => {
         navigate("/auth");
         setUserInfo(null);
         closeChat();
+        clearAuthToken();
       }
     } catch (error) {
       console.log(error);
@@ -149,6 +151,7 @@ const LeftSidebarProfile = () => {
         navigate("/auth");
         setUserInfo(null);
         closeChat();
+        clearAuthToken();
       }
     } catch (error) {
       console.error("Delete account error:", error);
