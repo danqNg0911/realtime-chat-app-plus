@@ -6,6 +6,7 @@ import PhotoFeedPage from "../PhotoFeedPage";
 import MusicPlayer from "../../components/ChatPageComponents/MusicPlayer";
 import ChristmasEffect from "../../components/ChatPageComponents/MusicPlayer/ChristmasEffect";
 import VietnamFlagEffect from "../../components/ChatPageComponents/MusicPlayer/VietnamFlagEffect";
+import FlowerEffect from "../../components/ChatPageComponents/MusicPlayer/FlowerEffect";
 import { useAppStore } from "../../store";
 import { useAudio } from "../../context/AudioContext";
 import "./ChatPage.css";
@@ -63,6 +64,7 @@ const ChatPage = () => {
           {/* Show effects only when playing */}
           {isPlaying && currentSongIndex === 0 && <ChristmasEffect />}
           {isPlaying && currentSongIndex === 1 && <VietnamFlagEffect />}
+          {isPlaying && currentSongIndex === 2 && <FlowerEffect />}
         </div>
       ) : (
         <>
