@@ -98,6 +98,10 @@ app.use("/socket.io", (req, res, next) => {
   socketProxy(req, res, next);
 });
 
+app.get("/", (_req, res) => {
+  res.status(200).send("ok");
+});
+
 /* ---------------------- HEALTH ---------------------- */
 app.get("/health", (req, res) => {
   res.json({

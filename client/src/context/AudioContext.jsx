@@ -22,16 +22,16 @@ export const AudioProvider = ({ children }) => {
 
     const [songs] = useState([
         {
-            name: import.meta.env.VITE_MUSIC_1_NAME || "The Nights - Avicii",
-            url: import.meta.env.VITE_MUSIC_1_URL || "/music/the-nights.mp3",
+            name: import.meta.env.VITE_MUSIC_1_NAME || "All I Want for Christmas Is You - Mariah Carey",
+            url: import.meta.env.VITE_MUSIC_1_URL || "/music/All-I-Want-for-Christmas-Is-You.mp3",
         },
         {
-            name: import.meta.env.VITE_MUSIC_2_NAME || "Until I Found You - Stephen Sanchez",
-            url: import.meta.env.VITE_MUSIC_2_URL || "/music/until-i-found-you.mp3",
+            name: import.meta.env.VITE_MUSIC_2_NAME || "Vinh Quang Dang Cho Ta (Seagames 33) - Soobin Hoang Son",
+            url: import.meta.env.VITE_MUSIC_2_URL || "/music/Vinh-Quang-Dang-Cho-Ta.mp3",
         },
         {
-            name: import.meta.env.VITE_MUSIC_3_NAME || "Demons - Imagine Dragons",
-            url: import.meta.env.VITE_MUSIC_3_URL || "/music/demons.mp3",
+            name: import.meta.env.VITE_MUSIC_3_NAME || "Bong Hoa Chang Ton Tai - Huy Vac",
+            url: import.meta.env.VITE_MUSIC_3_URL || "/music/Bong-Hoa-Chang-Ton-Tai.mp3",
         },
     ]);
 

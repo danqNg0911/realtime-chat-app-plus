@@ -21,9 +21,11 @@ spec:
             - containerPort: 80
           env:
             - name: VITE_SERVER_URL
-              value: "http://34.87.94.25:3001"
+              value: "https://vibechat.io.vn"
             - name: VITE_SOCKET_URL
-              value: "http://34.87.94.25:3001"
+              value: "https://vibechat.io.vn"
+            - name: VITE_SOCKET_PATH
+              value: "/socket.io"
           envFrom:
             - configMapRef:
                 name: app-config

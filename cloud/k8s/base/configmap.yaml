@@ -7,9 +7,9 @@ metadata:
     env: cloud
   namespace: default
 data:
-  ALLOWED_ORIGINS: "http://136.110.57.178,http://34.142.152.144,http://34.87.94.25"
-  VITE_SERVER_URL: "https://34.142.152.144"
-  VITE_SOCKET_URL: "wss://34.142.152.144"
+  ALLOWED_ORIGINS: "http://136.110.57.178,http://34.142.152.144,http://34.87.94.25,https://vibechat.io.vn"
+  VITE_SERVER_URL: "https://vibechat.io.vn"
+  VITE_SOCKET_URL: "wss://vibechat.io.vn"
 
 
   VITE_CLOUDINARY_CLOUD_NAME: "dqstqcaxd"
@@ -17,13 +17,13 @@ data:
   VITE_CLOUDINARY_FOLDER: "uploads"
 
   VITE_MUSIC_1_NAME: "All I Want for Christmas Is You - Mariah Carey"
-  VITE_MUSIC_1_URL: "/music/All I Want for Christmas Is You.mp3"
+  VITE_MUSIC_1_URL: "/music/All-I-Want-for-Christmas-Is-You.mp3"
 
   VITE_MUSIC_2_NAME: "Vinh Quang Dang Cho Ta (Seagames 33) - Soobin Hoang Son"
   VITE_MUSIC_2_URL: "/music/Vinh Quang Dang Cho Ta.mp3"
 
   VITE_MUSIC_3_NAME: "Bong Hoa Chang Ton Tai - Huy Vac"
-  VITE_MUSIC_3_URL: "/music/Bong Hoa Chang Ton Tai.mp3"
+  VITE_MUSIC_3_URL: "/music/Bong-Hoa-Chang-Ton-Tai.mp3"
 
   LIVEKIT_URL: "wss://chat-app-d9qdpteh.livekit.cloud"
   LIVEKIT_API_KEY: "APIGq8KPzU6ooe6"
