@@ -209,3 +209,68 @@ flowchart TD
 - See `cloud/k8s/base/*.yaml` for deployment details
 - See `.github/workflows/ci.yaml` for CI/CD automation
 - See `deploy-cloud.txt` for full cloud deployment steps
+- 
+
+
+
+
+# Microservice Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph Client
+        A1[React App (Nginx)]
+    end
+
+    subgraph API_Gateway
+        B1[API Gateway]
+    end
+
+    subgraph Auth_Service
+        C1[Auth Service]
+    end
+
+    subgraph Chat_Service
+        D1[Chat Service]
+    end
+
+    subgraph Media_AI_Service
+        E1[Media AI Service]
+    end
+
+    subgraph Database
+        F1[MongoDB]
+        F2[Redis]
+    end
+
+    subgraph External
+        G1[Cloudinary]
+        G2[Livekit]
+        G3[OIDC Provider (Keycloak/Google/Azure)]
+    end
+
+    %% Workflow
+    A1 -- REST/WebSocket --> B1
+    B1 -- Auth --> C1
+    B1 -- Chat --> D1
+    B1 -- Media AI --> E1
+    C1 -- DB --> F1
+    D1 -- DB --> F1
+    D1 -- Cache --> F2
+    E1 -- DB --> F1
+    E1 -- Cloud AI --> G1
+    D1 -- Livekit --> G2
+    C1 -- OIDC --> G3
+    B1 -- Config/Secrets --> F2
+```
+
+**Giải thích:**
+- Client (React/Nginx) giao tiếp với API Gateway qua REST/WebSocket.
+- API Gateway phân phối request tới các microservice: Auth, Chat, Media AI.
+- Auth Service xác thực, có thể kết nối OIDC/SSO.
+- Chat Service xử lý chat realtime, lưu dữ liệu vào MongoDB, cache bằng Redis, gọi Livekit cho video/audio.
+- Media AI Service xử lý AI, lưu dữ liệu vào MongoDB, kết nối Cloudinary cho media.
+- Database gồm MongoDB (dữ liệu chính) và Redis (cache/session).
+- External gồm Cloudinary (media), Livekit (call), OIDC Provider (SSO).
+
+Sơ đồ này tập trung vào các thành phần chính, workflow và kết nối giữa các microservice.
