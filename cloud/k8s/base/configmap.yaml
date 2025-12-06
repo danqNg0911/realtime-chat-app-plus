@@ -20,7 +20,7 @@ data:
   VITE_MUSIC_1_URL: "/music/All-I-Want-for-Christmas-Is-You.mp3"
 
   VITE_MUSIC_2_NAME: "Vinh Quang Dang Cho Ta (Seagames 33) - Soobin Hoang Son"
-  VITE_MUSIC_2_URL: "/music/Vinh Quang Dang Cho Ta.mp3"
+  VITE_MUSIC_2_URL: "/music/Vinh-Quang-Dang-Cho-Ta.mp3"
 
   VITE_MUSIC_3_NAME: "Bong Hoa Chang Ton Tai - Huy Vac"
   VITE_MUSIC_3_URL: "/music/Bong-Hoa-Chang-Ton-Tai.mp3"

@@ -8,6 +8,7 @@ COPY cors.js .
 COPY config/ ./config
 COPY controllers/ ./controllers
 COPY middlewares/ ./middlewares
+COPY emailVerification ./emailVerification
 COPY models/ ./models
 COPY routes/ ./routes
 COPY utils/ ./utils

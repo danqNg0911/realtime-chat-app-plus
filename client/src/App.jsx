@@ -2,6 +2,12 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthPage from "./pages/AuthPage";
 import ChatPage from "./pages/ChatPage";
 import ProfileLandingPage from "./pages/ProfileLandingPage";
+
+//email verification pages
+import VerifySuccess from "./pages/EmailVerifySuccess";
+import VerifyFailed from "./pages/EmailVerifyFailed";
+//
+
 import Notification from "./components/Notification";
 import CallOverlay from "./components/Call/CallOverlay";
 import GroupCallOverlay from "./components/Call/GroupCallOverlay";
@@ -126,6 +132,10 @@ function App() {
               </ProfileLandingRoute>
             }
           />
+          //email verification routes
+          <Route path="/email-verify-success" element={<VerifySuccess />} />
+          <Route path="/email-verify-failed" element={<VerifyFailed />} />
+          //
           <Route path="*" element={<Navigate to="/auth" />} />
         </Routes>
       </BrowserRouter>

@@ -43,7 +43,7 @@ gcloud artifacts repositories create %REPO_NAME% ^
 :: ENABLE WORKLOAD IDENTITY (chạy 1 lần)
 :: ================================
 gcloud container clusters update realtime-chat-autopilot-1 ^
-  --region=%REGION% ^
+  --region=%REGION% 
   --workload-pool=%PROJECT_ID%.svc.id.goog
 
 

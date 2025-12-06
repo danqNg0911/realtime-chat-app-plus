@@ -1,5 +1,7 @@
 import "./config/loadEnv.js";
+import mongoose from "mongoose";
 import { Server as SocketIOServer } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
 import Message from "./models/MessageModel.js";
 import Group from "./models/GroupModel.js";
 import User from "./models/UserModel.js";
@@ -10,7 +12,7 @@ import {
 
 let assistantUserPromise;
 let io;
-let userSocketMap;
+// let userSocketMap; 
 
 const getAssistantUser = async () => {
   if (!assistantUserPromise) {
@@ -20,11 +22,13 @@ const getAssistantUser = async () => {
       throw error;
     });
   }
-
   return assistantUserPromise;
 };
 
-const setupSocket = (server) => {
+// Hàm tiện ích để tạo key cho Redis (giúp quản lý key gọn gàng)
+const getUserKey = (userId) => `user:${userId}`;
+
+const setupSocket = (server, pubClient, subClient) => {
   if (io) {
     return io;
   }
@@ -40,16 +44,26 @@ const setupSocket = (server) => {
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
       credentials: true,
     },
+    adapter: createAdapter(pubClient, subClient),
   });
 
-  userSocketMap = new Map();
-
-  const disconnect = (socket) => {
-    for (const [userId, socketId] of userSocketMap.entries()) {
-      if (socketId === socket.id) {
-        userSocketMap.delete(userId);
-        break;
+  // Xử lý ngắt kết nối
+  const disconnect = async (socket) => {
+    try {
+      // Lấy userId đã lưu vào socket lúc connection
+      const userId = socket.userId;
+      if (userId) {
+        const key = getUserKey(userId);
+        // [QUAN TRỌNG] Kiểm tra xem ID trong Redis có khớp với ID của socket đang thoát không
+        // Để tránh trường hợp user mở Tab 1 (Socket A), mở Tab 2 (Socket B) -> Redis lưu B.
+        // Nếu Tab 1 tắt, ta không được xóa B đi.
+        const currentSocketId = await pubClient.get(key);
+        if (currentSocketId === socket.id) {
+          await pubClient.del(key);
+        }
       }
+    } catch (err) {
+      console.error("Disconnect error:", err);
     }
   };
 
@@ -91,7 +105,8 @@ const setupSocket = (server) => {
         return;
       }
 
-      const targetSocketId = userSocketMap.get(message.sender);
+      // Lấy socketID từ Redis thay vì Map
+      const targetSocketId = await pubClient.get(getUserKey(message.sender));
 
       if (message.messageType !== "text") {
         await createAssistantMessage(
@@ -122,7 +137,8 @@ const setupSocket = (server) => {
 
       try {
         const assistant = await getAssistantUser();
-        const fallbackSocketId = userSocketMap.get(message.sender);
+        // Lấy socketID từ Redis
+        const fallbackSocketId = await pubClient.get(getUserKey(message.sender));
         await createAssistantMessage(
           assistant,
           message.sender,
@@ -141,11 +157,13 @@ const setupSocket = (server) => {
     }
   };
 
-  const sendMessage = async (message) => {
+  /*const sendMessage = async (message) => {
     const assistant = await getAssistantUser().catch(() => null);
-    if (assistant && message.recipient?.toString() === assistant._id.toString()) {
-      const senderSocketId = userSocketMap.get(message.sender);
+    
+    // Lấy socketID người gửi từ Redis
+    const senderSocketId = await pubClient.get(getUserKey(message.sender));
 
+    if (assistant && message.recipient?.toString() === assistant._id.toString()) {
       const createdMessage = await Message.create(message);
       const messageData = await Message.findById(createdMessage._id)
         .populate("sender", "id email firstName lastName image color")
@@ -159,8 +177,8 @@ const setupSocket = (server) => {
       return;
     }
 
-    const senderSocketId = userSocketMap.get(message.sender);
-    const recipientSocketId = userSocketMap.get(message.recipient);
+    // Lấy socketID người nhận từ Redis
+    const recipientSocketId = await pubClient.get(getUserKey(message.recipient));
 
     const createdMessage = await Message.create(message);
 
@@ -168,16 +186,119 @@ const setupSocket = (server) => {
       .populate("sender", "id email firstName lastName image color")
       .populate("recipient", "id email firstName lastName image color");
 
+    // Gửi cho người nhận (Dù họ ở server nào, Adapter sẽ lo phần còn lại)
     if (recipientSocketId) {
       io.to(recipientSocketId).emit("receiveMessage", messageData);
     }
     if (senderSocketId) {
       io.to(senderSocketId).emit("receiveMessage", messageData);
     }
+  };*/
+
+  const sendMessage = async (message) => {
+    try {
+        const assistant = await getAssistantUser().catch(() => null);
+
+        if (!message.messageType) return;
+        if (message.messageType === "text" && !message.content) return;
+        if (message.messageType === "file" && !message.fileUrl) return;
+
+        // Frontend có thể gửi lên cả object, ta chỉ lấy _id hoặc id (2)
+        const senderId = message.sender._id || message.sender.id || message.sender;
+        const recipientId = message.recipient._id || message.recipient.id || message.recipient;
+
+        // 1. CHUẨN BỊ DỮ LIỆU (Tự tạo ID để không phụ thuộc MongoDB)
+        const messageId = new mongoose.Types.ObjectId();
+        const timestamp = new Date();
+
+        const [rawSender, rawRecipient] = await Promise.all([
+            User.findById(message.sender).select("id email firstName lastName image color").lean(),
+            User.findById(message.recipient).select("id email firstName lastName image color").lean()
+        ]);
+
+        if (!rawSender || !rawRecipient) {
+             console.error("❌ Không tìm thấy user:", message.sender, message.recipient);
+             return; 
+        }
+
+        // Tạo object chuẩn cho cả hai
+        const senderData = {
+            ...rawSender,
+            _id: rawSender._id.toString(),
+            id: rawSender._id.toString()
+        };
+
+        const recipientData = {
+            ...rawRecipient,
+            _id: rawRecipient._id.toString(),
+            id: rawRecipient._id.toString()
+        };
+        
+        // Dữ liệu chuẩn để lưu DB và gửi Socket
+        const dbPayload = {
+            _id: messageId,
+            sender: message.sender,       // ID người gửi
+            recipient: message.recipient, // ID người nhận
+            messageType: message.messageType, // "text" hoặc "file"
+            content: message.content || undefined, // Nếu là file thì content = undefined
+            fileUrl: message.fileUrl || undefined, // Nếu là text thì fileUrl = undefined
+            timestamp: timestamp,
+            __v: 0 
+        };
+
+        const socketPayload = {
+            ...dbPayload,
+            _id: messageId.toString(), // [QUAN TRỌNG 1] Ép sang chuỗi
+            id: messageId.toString(),  // [QUAN TRỌNG 2] Thêm trường id
+            timestamp: timestamp.toISOString(), // [QUAN TRỌNG 3] Ép ngày tháng sang chuỗi chuẩn
+            createdAt: timestamp.toISOString(),
+            sender: senderData,
+            recipient: recipientData
+        };
+
+        // 2. XỬ LÝ SOCKET (Gửi ngay lập tức - Zero Latency)
+        // Lấy socketID từ Redis
+        const senderSocketId = await pubClient.get(getUserKey(message.sender));
+        const recipientSocketId = await pubClient.get(getUserKey(message.recipient));
+
+        // Logic AI Assistant (Giữ nguyên logic cũ nhưng xử lý riêng)
+        if (assistant && message.recipient?.toString() === assistant._id.toString()) {
+            // Với AI, ta vẫn gửi socket cho người gửi để hiện tin nhắn của chính họ
+            if (senderSocketId) {
+                // Lưu ý: Ở đây ta gửi payload thô, Frontend cần tự hiển thị thông tin user 
+                // hoặc bạn phải query cache user profile để ghép vào nếu muốn đẹp ngay.
+                io.to(senderSocketId).emit("receiveMessage", socketPayload);
+            }
+            // Gọi AI trả lời (AI vẫn cần lưu tin nhắn vào DB để có context, 
+            // nên ta sẽ lưu tin nhắn người dùng chat với AI thẳng vào DB luôn cho an toàn logic AI)
+            await Message.create(dbPayload); 
+            await maybeSendAssistantReply(message, senderSocketId);
+            return;
+        }
+
+        // Logic Chat Người - Người (Dùng Queue)
+        // Gửi cho người nhận
+        if (recipientSocketId) {
+            io.to(recipientSocketId).emit("receiveMessage", socketPayload);
+        }
+        // Gửi lại cho người gửi (để UI cập nhật status đã gửi)
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("receiveMessage", socketPayload);
+        }
+
+        // 3. ĐẨY VÀO HÀNG ĐỢI REDIS (Lưu sau)
+        // Chỉ đẩy tin nhắn người-người vào queue
+        // Chat với AI đã lưu trực tiếp ở trên rồi.
+        await pubClient.rPush("chat_queue", JSON.stringify(dbPayload));
+
+    } catch (err) {
+        console.error("Lỗi gửi tin nhắn:", err);
+    }
   };
 
   const sendFriendRequest = async (friendRequest) => {
-    const recipientSocketId = userSocketMap.get(friendRequest.target._id);
+    // Lấy socketID từ Redis
+    const recipientSocketId = await pubClient.get(getUserKey(friendRequest.target._id));
     if (recipientSocketId) {
       io.to(recipientSocketId).emit(
         "receiveFriendRequest",
@@ -212,32 +333,38 @@ const setupSocket = (server) => {
     });
     const group = await Group.findById(groupId).populate("members");
     const finalData = { ...messageData._doc, groupId: group._id, group };
+    
     if (group && group.members) {
-      group.members.forEach((member) => {
-        const memberSocketId = userSocketMap.get(member._id.toString());
+      //  Dùng vòng lặp for...of để await Redis
+      for (const member of group.members) {
+        const memberSocketId = await pubClient.get(getUserKey(member._id.toString()));
         if (memberSocketId) {
           io.to(memberSocketId).emit("receiveGroupMessage", finalData);
         }
-      });
+      }
     }
   };
 
   const createGroupEvent = async (group) => {
     if (group && group.members) {
-      group.members.forEach((member) => {
-        const memberSocketId = userSocketMap.get(member);
+      // Dùng vòng lặp for...of
+      for (const member of group.members) {
+        const memberSocketId = await pubClient.get(getUserKey(member));
         if (memberSocketId) {
           io.to(memberSocketId).emit("receiveGroupCreation", group);
         }
-      });
+      }
     }
   };
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     const userId = socket.handshake.query.userId;
 
     if (userId) {
-      userSocketMap.set(userId, socket.id);
+      // Lưu userId vào socket object để dùng lúc disconnect
+      socket.userId = userId; 
+      // Lưu map UserID -> SocketID vào Redis
+      await pubClient.set(getUserKey(userId), socket.id);
     }
 
     socket.on("sendMessage", sendMessage);
@@ -268,7 +395,8 @@ const setupSocket = (server) => {
           return;
         }
 
-        const recipientSocketId = userSocketMap.get(String(to));
+        // Redis get
+        const recipientSocketId = await pubClient.get(getUserKey(String(to)));
         if (recipientSocketId) {
           io.to(recipientSocketId).emit("call:incoming", {
             from: String(userId),
@@ -286,10 +414,12 @@ const setupSocket = (server) => {
         if (!groupId) return;
         const group = await Group.findById(groupId).lean();
         if (!group || !group.members) return;
-        group.members.forEach((memberId) => {
+        
+        for (const memberId of group.members) {
           const mid = memberId.toString();
-          if (mid === String(userId)) return;
-          const sid = userSocketMap.get(mid);
+          if (mid === String(userId)) continue;
+          
+          const sid = await pubClient.get(getUserKey(mid));
           if (sid) {
             io.to(sid).emit("group:call:incoming", {
               groupId: String(groupId),
@@ -297,7 +427,7 @@ const setupSocket = (server) => {
               callType,
             });
           }
-        });
+        }
       } catch (err) {
         console.error("group:call:offer error", err);
       }
@@ -308,19 +438,22 @@ const setupSocket = (server) => {
         if (!groupId) return;
         const group = await Group.findById(groupId).lean();
         if (!group || !group.members) return;
-        group.members.forEach((memberId) => {
-          const sid = userSocketMap.get(memberId.toString());
+        
+        // Vòng lặp for...of
+        for (const memberId of group.members) {
+          const sid = await pubClient.get(getUserKey(memberId.toString()));
           if (sid) io.to(sid).emit("group:call:ended", { groupId: String(groupId) });
-        });
+        }
       } catch (err) {
         console.error("group:call:end error", err);
       }
     });
 
-    socket.on("call:accept", ({ to, callId }) => {
+    socket.on("call:accept", async ({ to, callId }) => {
       try {
         if (!to || !callId) return;
-        const callerSocketId = userSocketMap.get(String(to));
+        // Redis get
+        const callerSocketId = await pubClient.get(getUserKey(String(to)));
         if (callerSocketId) {
           io.to(callerSocketId).emit("call:accepted", {
             from: String(userId),
@@ -332,10 +465,11 @@ const setupSocket = (server) => {
       }
     });
 
-    socket.on("call:reject", ({ to, callId }) => {
+    socket.on("call:reject", async ({ to, callId }) => {
       try {
         if (!to || !callId) return;
-        const callerSocketId = userSocketMap.get(String(to));
+        // Redis get
+        const callerSocketId = await pubClient.get(getUserKey(String(to)));
         if (callerSocketId) {
           io.to(callerSocketId).emit("call:rejected", {
             from: String(userId),
@@ -347,10 +481,11 @@ const setupSocket = (server) => {
       }
     });
 
-    socket.on("call:end", ({ to, callId }) => {
+    socket.on("call:end", async ({ to, callId }) => {
       try {
         if (!to || !callId) return;
-        const peerSocketId = userSocketMap.get(String(to));
+        // Redis get
+        const peerSocketId = await pubClient.get(getUserKey(String(to)));
         if (peerSocketId) {
           io.to(peerSocketId).emit("call:ended", {
             from: String(userId),
@@ -383,6 +518,5 @@ const setupSocket = (server) => {
 };
 
 export const getSocketIO = () => io;
-export const getUserSocketMap = () => userSocketMap;
 
 export default setupSocket;
