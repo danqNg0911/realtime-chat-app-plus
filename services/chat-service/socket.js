@@ -203,10 +203,6 @@ const setupSocket = (server, pubClient, subClient) => {
         if (message.messageType === "text" && !message.content) return;
         if (message.messageType === "file" && !message.fileUrl) return;
 
-        // Frontend có thể gửi lên cả object, ta chỉ lấy _id hoặc id (2)
-        const senderId = message.sender._id || message.sender.id || message.sender;
-        const recipientId = message.recipient._id || message.recipient.id || message.recipient;
-
         // 1. CHUẨN BỊ DỮ LIỆU (Tự tạo ID để không phụ thuộc MongoDB)
         const messageId = new mongoose.Types.ObjectId();
         const timestamp = new Date();
@@ -251,7 +247,6 @@ const setupSocket = (server, pubClient, subClient) => {
             _id: messageId.toString(), // [QUAN TRỌNG 1] Ép sang chuỗi
             id: messageId.toString(),  // [QUAN TRỌNG 2] Thêm trường id
             timestamp: timestamp.toISOString(), // [QUAN TRỌNG 3] Ép ngày tháng sang chuỗi chuẩn
-            createdAt: timestamp.toISOString(),
             sender: senderData,
             recipient: recipientData
         };
