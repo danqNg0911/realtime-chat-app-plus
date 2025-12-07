@@ -45,6 +45,9 @@ const setupSocket = (server, pubClient, subClient) => {
       credentials: true,
     },
     adapter: createAdapter(pubClient, subClient),
+
+    pingInterval: 10000, // Gửi Ping mỗi 10 giây (Mặc định cũ là 25s -> Quá chậm)
+    pingTimeout: 8000,
   });
 
   // Xử lý ngắt kết nối
@@ -195,17 +198,107 @@ const setupSocket = (server, pubClient, subClient) => {
     }
   };*/
 
-  const sendMessage = async (message) => {
+  const sendMessage = async (message, socket) => {
     try {
+        // --- 1. VALIDATION (GIỮ NGUYÊN) ---
         const assistant = await getAssistantUser().catch(() => null);
 
         if (!message.messageType) return;
         if (message.messageType === "text" && !message.content) return;
         if (message.messageType === "file" && !message.fileUrl) return;
 
-        // Frontend có thể gửi lên cả object, ta chỉ lấy _id hoặc id (2)
-        const senderId = message.sender._id || message.sender.id || message.sender;
-        const recipientId = message.recipient._id || message.recipient.id || message.recipient;
+        // --- 2. CHUẨN BỊ DỮ LIỆU (TỐI ƯU HÓA) ---
+        const messageId = new mongoose.Types.ObjectId();
+        const timestamp = new Date();
+
+        // [THAY ĐỔI LỚN NHẤT TẠI ĐÂY] 
+        // Thay vì gọi DB, lấy từ biến socket đã cache ở bước connection
+        let senderData = socket.userProfile;
+
+        // Fallback: Nếu cache lỗi (hiếm), tạo object giả để không crash app
+        if (!senderData) {
+            senderData = {
+                _id: message.sender,
+                id: message.sender,
+                email: "", firstName: "User", lastName: "", image: "", color: ""
+            };
+        }
+
+        // Với người nhận, ta không cần query DB làm gì, chỉ cần ID là đủ gửi tin
+        const recipientData = {
+            _id: message.recipient,
+            id: message.recipient,
+            // Các trường khác để null/rỗng cũng được vì Frontend người gửi không cần hiển thị chi tiết người nhận ngay lập tức
+            email: "", firstName: "", lastName: "", image: "", color: ""
+        };
+
+        // Tạo Payload chuẩn DB (GIỮ NGUYÊN CẤU TRÚC CŨ)
+        const dbPayload = {
+            _id: messageId,
+            sender: message.sender,
+            recipient: message.recipient,
+            messageType: message.messageType,
+            content: message.content || undefined,
+            fileUrl: message.fileUrl || undefined,
+            timestamp: timestamp,
+            __v: 0,
+            isGroup: false // Cờ đánh dấu cho Worker
+        };
+
+        // Tạo Payload chuẩn Socket (GIỮ NGUYÊN CẤU TRÚC CŨ)
+        const socketPayload = {
+            ...dbPayload,
+            _id: messageId.toString(),
+            id: messageId.toString(),
+            timestamp: timestamp.toISOString(),
+            sender: senderData,      // Dữ liệu lấy từ Cache
+            recipient: recipientData // Dữ liệu tối giản
+        };
+
+        // --- 3. LOGIC AI (GIỮ NGUYÊN) ---
+        // Phần này giữ nguyên vì AI cần logic riêng
+        if (assistant && message.recipient?.toString() === assistant._id.toString()) {
+            const senderSocketId = await pubClient.get(getUserKey(message.sender));
+            if (senderSocketId) {
+                io.to(senderSocketId).emit("receiveMessage", socketPayload);
+            }
+            // AI bắt buộc phải lưu DB ngay để có context trả lời
+            await Message.create(dbPayload); 
+            await maybeSendAssistantReply(message, senderSocketId);
+            return;
+        }
+
+        // --- 4. LOGIC CHAT THƯỜNG (DÙNG QUEUE) ---
+        
+        // A. Đẩy vào Queue (Thay vì await Message.create)
+        // Dùng JSON.stringify y hệt code cũ bạn gửi ở các comment trước
+        await pubClient.rPush("chat_queue", JSON.stringify(dbPayload));
+
+        // B. Gửi Socket
+        const senderSocketId = await pubClient.get(getUserKey(message.sender));
+        const recipientSocketId = await pubClient.get(getUserKey(message.recipient));
+
+        // Gửi cho người nhận
+        if (recipientSocketId) {
+            io.to(recipientSocketId).emit("receiveMessage", socketPayload);
+        }
+        // Gửi lại cho người gửi (Ack)
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("receiveMessage", socketPayload);
+        }
+
+    } catch (err) {
+        console.error("Lỗi gửi tin nhắn:", err);
+    }
+  };
+
+  /*const sendMessage = async (message) => {
+    try {
+        const assistant = await getAssistantUser().catch(() => null);
+
+        if (!message.messageType) return;
+        if (message.messageType === "text" && !message.content) return;
+        if (message.messageType === "file" && !message.fileUrl) return;
 
         // 1. CHUẨN BỊ DỮ LIỆU (Tự tạo ID để không phụ thuộc MongoDB)
         const messageId = new mongoose.Types.ObjectId();
@@ -251,7 +344,6 @@ const setupSocket = (server, pubClient, subClient) => {
             _id: messageId.toString(), // [QUAN TRỌNG 1] Ép sang chuỗi
             id: messageId.toString(),  // [QUAN TRỌNG 2] Thêm trường id
             timestamp: timestamp.toISOString(), // [QUAN TRỌNG 3] Ép ngày tháng sang chuỗi chuẩn
-            createdAt: timestamp.toISOString(),
             sender: senderData,
             recipient: recipientData
         };
@@ -294,7 +386,7 @@ const setupSocket = (server, pubClient, subClient) => {
     } catch (err) {
         console.error("Lỗi gửi tin nhắn:", err);
     }
-  };
+  };*/
 
   const sendFriendRequest = async (friendRequest) => {
     // Lấy socketID từ Redis
@@ -360,16 +452,69 @@ const setupSocket = (server, pubClient, subClient) => {
   io.on("connection", async (socket) => {
     const userId = socket.handshake.query.userId;
 
-    if (userId) {
+    /*if (userId) {
       // Lưu userId vào socket object để dùng lúc disconnect
       socket.userId = userId; 
       // Lưu map UserID -> SocketID vào Redis
       await pubClient.set(getUserKey(userId), socket.id);
+    }*/
+
+    /*if (userId) {
+        socket.userId = userId;
+        
+        // [TỐI ƯU] Lấy info user NGAY LÚC KẾT NỐI và lưu vào Socket Object
+        // Chỉ tốn 1 lần query DB khi user mở app.
+        try {
+            const userProfile = await User.findById(userId)
+                                    .select("id email firstName lastName image color")
+                                    .lean();
+            socket.userProfile = {
+                ...userProfile,
+                _id: userProfile._id.toString(),
+                id: userProfile._id.toString()
+            };
+        } catch (e) {
+            console.error("Lỗi cache user profile:", e);
+        }
+
+        // Lưu Redis map
+        await pubClient.set(getUserKey(userId), socket.id);
+    }*/
+
+    if (userId) {
+        socket.userId = userId;
+
+        // 1. LƯU REDIS: Fire & Forget (Bắn đi và quên luôn, không dùng await)
+        // Nếu lỗi thì log ra console, không làm chậm luồng chính
+        pubClient.set(getUserKey(userId), socket.id)
+            .catch(err => console.error("Redis Map Error:", err));
+
+        // 2. QUERY MONGO: Chạy ngầm (Background)
+        // Sử dụng .then() thay vì await. Code sẽ chạy xuống dưới ngay lập tức để đăng ký sự kiện chat.
+        User.findById(userId)
+            .select("id email firstName lastName image color")
+            .lean()
+            .then((userProfile) => {
+                // Khi nào DB trả về thì mới chạy vào đây (Callback)
+                if (userProfile) {
+                    socket.userProfile = {
+                        ...userProfile,
+                        _id: userProfile._id.toString(),
+                        id: userProfile._id.toString()
+                    };
+                }
+            })
+            .catch((e) => {
+                console.error("Lỗi cache user profile (Background):", e);
+            });
     }
 
-    socket.on("sendMessage", sendMessage);
+    //redis fix here
+    //socket.on("sendMessage", sendMessage);
+    socket.on("sendMessage", (msg) => sendMessage(msg, socket));
     socket.on("sendFriendRequest", sendFriendRequest);
     socket.on("sendGroupMessage", sendGroupMessage);
+    //socket.on("sendGroupMessage", (msg) => sendGroupMessage(msg, socket));
     socket.on("createGroup", createGroupEvent);
 
     socket.on("call:offer", async ({ to, callId, callType }) => {

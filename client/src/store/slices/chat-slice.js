@@ -90,7 +90,6 @@ export const createChatSlice = (set, get) => ({
       selectedChatMessages: [],
       selectedChatMembers: [],
     }),
-  /*  
   addMessage: (message) => {
     const { selectedChatMessages } = get();
     const { selectedChatType } = get();
@@ -114,32 +113,9 @@ export const createChatSlice = (set, get) => ({
     // set({
     //   showFileUploadPlaceholder: true,
     // });
-  },*/
-
-  addMessage: (message) => {
-    const { selectedChatMessages } = get();
-    
-    // Check trùng lặp: Nếu tin nhắn có _id này đã tồn tại thì KHÔNG thêm nữa
-    const isDuplicate = selectedChatMessages.some(msg => msg._id === message._id);
-    if (isDuplicate) return;
-
-    set({
-      selectedChatMessages: [
-        ...selectedChatMessages,
-        {
-          ...message,
-          // Đảm bảo giữ nguyên Object để UI hiển thị đúng avatar/tên
-          sender: message.sender,
-          recipient: message.recipient, 
-        },
-      ],
-    });
   },
 
-  /*addContactsInDMContacts: (message) => {
-    // 1. Kiểm tra an toàn: Nếu message rỗng thì dừng ngay để tránh sập
-    if (!message || !message.sender || !message.recipient) return;
-
+  addContactsInDMContacts: (message) => {
     const userId = get().userInfo.id;
     const fromId =
       message.sender._id === userId
@@ -147,114 +123,18 @@ export const createChatSlice = (set, get) => ({
         : message.sender._id;
     const fromData =
       message.sender._id === userId ? message.recipient : message.sender;
-    const dmContacts = [...get().directMessagesContacts];
-    //const dmContacts = get().directMessagesContacts;
-    //const data = dmContacts.find((contact) => contact._id === fromId);
+    const dmContacts = get().directMessagesContacts;
+    const data = dmContacts.find((contact) => contact._id === fromId);
     const index = dmContacts.findIndex((contact) => contact._id === fromId);
-
-    // message preview 
-    let previewContent = message.content;
-    if (message.messageType === "file") {
-        previewContent = "Has sent a file"; 
-    }
-
-    // Tạo object tin nhắn preview chuẩn
-    const lastMessageData = {
-        _id: message._id, 
-        content: previewContent || "", 
-        // QUAN TRỌNG: Phải có sender để UI biết ai nhắn (tránh crash khi check sender._id)
-        sender: message.sender, 
-        messageType: message.messageType,
-        fileUrl: message.fileUrl,
-        // Chấp nhận cả 2 trường thời gian để không bị lỗi hiển thị giờ
-        timestamp: message.timestamp || message.createdAt || new Date().toISOString(),
-    };
-
     if (index !== -1 && index !== undefined) {
       dmContacts.splice(index, 1);
       dmContacts.unshift(data);
     } else {
       dmContacts.unshift(fromData);
     }
-
-    if (index !== -1 && index !== undefined) {
-      // User đã có trong list -> Cắt ra khỏi vị trí cũ
-      const [existingContact] = dmContacts.splice(index, 1);
-      
-      // Cập nhật tin nhắn mới nhất
-      const updatedContact = {
-          ...existingContact,
-          lastMessage: lastMessageData, 
-      };
-      
-      // Đưa lên đầu
-      dmContacts.unshift(updatedContact);
-    } else {
-      // User mới -> Tạo mới
-      const newContact = {
-          ...fromData,
-          lastMessage: lastMessageData,
-      };
-      dmContacts.unshift(newContact);
-    }
-    
     set({ directMessagesContacts: dmContacts });
-  },*/
-
-  addContactsInDMContacts: (message) => {
-    try {
-        const { userInfo, directMessagesContacts } = get();
-        if (!userInfo || !message || !message.sender) return;
-
-        const myId = userInfo.id || userInfo._id; 
-        const senderId = message.sender._id || message.sender.id;
-        const recipientId = message.recipient._id || message.recipient.id;
-
-        // Xác định ID người kia
-        const fromId = (senderId.toString() === myId.toString()) ? recipientId : senderId;
-        const fromData = (senderId.toString() === myId.toString()) ? message.recipient : message.sender;
-
-        const dmContacts = [...(directMessagesContacts || [])];
-        const index = dmContacts.findIndex((contact) => 
-            (contact._id || contact.id).toString() === fromId.toString()
-        );
-
-        // Preview text
-        let previewContent = message.content;
-        if (message.messageType === "file") {
-            previewContent = message.fileUrl ? "Đã gửi một ảnh" : "Đã gửi một tệp";
-        }
-
-        // Tạo lastMessage
-        const lastMessageData = {
-            _id: message._id,
-            content: previewContent || "", 
-            sender: message.sender, 
-            messageType: message.messageType,
-            fileUrl: message.fileUrl,
-            timestamp: message.timestamp || message.createdAt || new Date().toISOString(),
-        };
-
-        if (index !== -1) {
-            const [existingContact] = dmContacts.splice(index, 1);
-            dmContacts.unshift({
-                ...existingContact,
-                lastMessage: lastMessageData, 
-            });
-        } else {
-            dmContacts.unshift({
-                ...fromData,
-                lastMessage: lastMessageData,
-            });
-        }
-
-        set({ directMessagesContacts: dmContacts });
-
-    } catch (error) {
-        console.error("⚠️ Sidebar Error:", error);
-    }
   },
-
+  
   groups: [],
 
   setGroups: (groups) => set({ groups }),
