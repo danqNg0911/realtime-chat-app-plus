@@ -6,3 +6,4 @@ resources:
   - chat-service.yaml
   - media-ai-service.yaml
   - client.yaml
+  - runtime-config-configmap.yaml

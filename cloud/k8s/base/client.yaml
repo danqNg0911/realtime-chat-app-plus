@@ -38,6 +38,17 @@ spec:
             limits:
               cpu: "500m"
               memory: "768Mi"
+          volumeMounts:
+            - name: runtime-config
+              mountPath: /usr/share/nginx/html/runtime-config.js
+              subPath: runtime-config.js
+      volumes:
+        - name: runtime-config
+          configMap:
+            name: runtime-config
+            items:
+              - key: runtime-config.js
+                path: runtime-config.js
 
 ---
 apiVersion: v1
@@ -53,4 +64,6 @@ spec:
   ports:
     - port: 80
       targetPort: 80
+  
+
 
