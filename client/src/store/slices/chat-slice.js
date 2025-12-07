@@ -114,6 +114,7 @@ export const createChatSlice = (set, get) => ({
     //   showFileUploadPlaceholder: true,
     // });
   },
+
   addContactsInDMContacts: (message) => {
     const userId = get().userInfo.id;
     const fromId =
@@ -133,7 +134,7 @@ export const createChatSlice = (set, get) => ({
     }
     set({ directMessagesContacts: dmContacts });
   },
-
+  
   groups: [],
 
   setGroups: (groups) => set({ groups }),

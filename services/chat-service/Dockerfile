@@ -4,6 +4,7 @@ COPY package*.json ./
 RUN npm install --omit=dev
 COPY index.js .
 COPY socket.js .
+COPY chatWorker.js .
 COPY auth.js .
 COPY cors.js .
 COPY config/ ./config

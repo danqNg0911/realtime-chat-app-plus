@@ -1,0 +1,62 @@
+steps:
+  # Build & Push api-gateway
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/api-gateway:latest', 'services/api-gateway']
+  - name: gcr.io/cloud-builders/docker
+    args: ['push', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/api-gateway:latest']
+
+  # Build & Push auth-user-service
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/auth-user-service:latest', 'services/auth-user-service']
+  - name: gcr.io/cloud-builders/docker
+    args: ['push', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/auth-user-service:latest']
+
+  # Build & Push chat-service
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/chat-service:latest', 'services/chat-service']
+  - name: gcr.io/cloud-builders/docker
+    args: ['push', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/chat-service:latest']
+
+  # Build & Push media-ai-service
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/media-ai-service:latest', 'services/media-ai-service']
+  - name: gcr.io/cloud-builders/docker
+    args: ['push', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/media-ai-service:latest']
+
+  # Build & Push client (nginx)
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/client:latest', 'client']
+  - name: gcr.io/cloud-builders/docker
+    args: ['push', 'asia-southeast1-docker.pkg.dev/app-chat-478713/chat/client:latest']
+
+  # Deploy to GKE via kubectl (NO gke-deploy)
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo ">>> Get Cluster Credentials"
+        gcloud container clusters get-credentials realtime-chat-autopilot-1 \
+          --region asia-southeast1 \
+          --project app-chat-478713
+
+        echo ">>> Apply Kustomize"
+        kubectl apply -k cloud/k8s/overlays/gke
+
+        echo ">>> Rollout Status"
+        kubectl rollout status deployment/api-gateway
+        kubectl rollout status deployment/auth-user-service
+        kubectl rollout status deployment/chat-service
+        kubectl rollout status deployment/media-ai-service
+        kubectl rollout status deployment/client
+
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "Active SA:"
+        gcloud auth list
+
+options:
+  logging: CLOUD_LOGGING_ONLY

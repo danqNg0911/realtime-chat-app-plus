@@ -15,11 +15,19 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState(""); // For displaying errors on UI
+  const [errorMessage, setErrorMessage] = useState(""); // For displaying errors on UI  
   const [oauthProviders, setOauthProviders] = useState({
     google: false,
     github: false,
   });
+
+  // **TRẠNG THÁI RESEND TỪ SIGNUP**
+  const [showResendForm, setShowResendForm] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0); 
+  const [attemptsRemaining, setAttemptsRemaining] = useState(5);
+  //
 
   const API_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
 
@@ -140,6 +148,24 @@ const AuthPage = () => {
           },
           { withCredentials: true }
         );
+
+         // If server created a pending user and sent verification email
+        if (response.data?.isPending) {
+          toast.info("Hãy truy cập vào email của bạn để xác thực");
+          // Show resend UI and switch to sign-in panel
+          setPendingUserId(response.data.pendingUserId || null);
+          setShowResendForm(true);
+          // remove right-panel-active so sign-in panel is visible
+          if (containerRef?.current) {
+            containerRef.current.classList.remove("right-panel-active");
+          }
+          // optional: clear password fields
+          setPassword("");
+          setConfirmPassword("");
+          return;
+        }
+        //
+
         if (response.status === 201) {
           if (response.data.token) {
             saveAuthToken(response.data.token);
@@ -157,6 +183,33 @@ const AuthPage = () => {
       }
     }
   };
+
+  //handle resend verification email
+  const handleResend = async () => {
+    if (!email) {
+      toast.warn("Please enter the email used to sign up in the form above");
+      return;
+    }
+    setResendLoading(true);
+    try {
+      const res = await apiClient.post("/api/auth/resend-verification", { email });
+      toast.success(res.data?.message || "Verification email resent");
+      if (res.data?.attemptsRemaining !== undefined) {
+        setAttemptsRemaining(res.data.attemptsRemaining);
+      }
+      const retryMs = res.data?.retryAfterMs || 60000;
+      setResendCountdown(Math.ceil(retryMs / 1000));
+    } catch (err) {
+      const retry = err.response?.data?.retryAfterMs;
+      if (retry) {
+        setResendCountdown(Math.ceil(retry / 1000));
+      }
+      toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to resend");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+  //
 
   const handleOAuthLogin = (provider) => {
     // Prevent form submission
