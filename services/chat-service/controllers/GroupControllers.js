@@ -1,6 +1,6 @@
 import Group from "../models/GroupModel.js";
 import User from "../models/UserModel.js";
-import { getSocketIO, getUserSocketMap } from "../socket.js";
+//import { getSocketIO, getUserSocketMap } from "../socket.js";
 import {
   detectBlockingConflictBetweenSets,
   detectBlockingConflictForMembers,
@@ -298,21 +298,23 @@ export const updateGroupInfo = async (request, response) => {
     await group.save();
 
     const io = getSocketIO();
-    const userSocketMap = getUserSocketMap();
+    //const userSocketMap = getUserSocketMap();
+    const redisClient = request.app.get("redisClient");
 
-    if (io && userSocketMap && group.members) {
+    if (io && group.members) {
       const updateData = {
         groupId: group._id,
         name: group.name,
         image: group.image,
       };
 
-      group.members.forEach((member) => {
-        const memberSocketId = userSocketMap.get(member._id.toString());
-        if (memberSocketId) {
-          io.to(memberSocketId).emit("groupInfoUpdated", updateData);
+      for (const member of group.members) {
+        // Lấy key theo đúng quy tắc bên socket.js: "user:{id}"
+        const socketId = await redisClient.get(`user:${member._id.toString()}`);
+        if (socketId) {
+          io.to(socketId).emit("groupInfoUpdated", updateData);
         }
-      });
+      }
     }
 
     return response.status(200).json({

@@ -19,8 +19,21 @@ import {
   authCookieOptions,
 } from "../utils/cookies.js";
 
+//email verification import
+import { verifyEmail, resendVerification } from "../controllers/AuthController.js";
+import rateLimit from "express-rate-limit";
+
 const authRoutes = Router();
 const frontendOrigin = getPrimaryOrigin();
+
+// Rate limiter for resending verification emails
+const resendEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 phút
+  max: 3, // tối đa 3 lần trong 15 phút
+  message: "You have exceeded the maximum number of resend attempts. Please try again after 15 minutes.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const createToken = (email, userId) =>
   jwt.sign({ email, userId }, process.env.JWT_KEY, { expiresIn: maxAge });
@@ -33,6 +46,12 @@ authRoutes.post("/logout", logout);
 authRoutes.put("/reset-app", resetApp);
 authRoutes.put("/change-password", verifyToken, changePassword);
 authRoutes.delete("/delete-account", verifyToken, deleteAccount);
+
+//email verification routes
+authRoutes.get("/verify-email", verifyEmail); 
+authRoutes.post("/resend-verification", resendEmailLimiter, resendVerification);  
+//
+
 
 authRoutes.get("/oauth-providers", (req, res) => {
   const providers = {
