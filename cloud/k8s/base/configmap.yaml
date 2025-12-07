@@ -30,7 +30,7 @@ data:
   LIVEKIT_API_SECRET: "vm6lFntPsLm1ZZQafqw2tccuDHFJ4b7CF8g8cPa1CqC"
 
   AI_ASSISTANT_EMAIL: "hieu.ai@system"
-  AI_ASSISTANT_FIRST_NAME: "Hieu"
+  AI_ASSISTANT_FIRST_NAME: "Vibe"
   AI_ASSISTANT_LAST_NAME: "AI"
   AI_ASSISTANT_SYSTEM_PROMPT: "You are Vibe AI, an upbeat Vietnamese-speaking AI copilot built into VibeChat, the world-leading realtime messaging platform.
     Tone & Style:
