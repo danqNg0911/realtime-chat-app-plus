@@ -1,3 +1,9 @@
+## Member:
+
+Nguyễn Hữu Hải Đăng - 23020524
+Phạm Huy Hiếu - 23020535
+Phạm Việt Hưng - 23020542
+
 ## Realtime Chat App
 
 A real-time chat application whose style is heavily inspired by WhatsApp. Built using the MERN Stack (`MongoDB`, `Express.js`, `React`, `Node.js`) with `Cloudinary` for file storage and `Socket.IO` for instant messaging.
