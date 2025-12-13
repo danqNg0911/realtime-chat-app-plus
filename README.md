@@ -176,28 +176,31 @@ Runs every backend plus the client in separate Command Prompt windows (make sure
 ### 📷 Screenshots
 
 `SIGNING UP & SIGNING IN:`
-![signup](https://github.com/user-attachments/assets/9f656b5b-bdd6-42be-9293-e44f52ca0359)
-![signin](https://github.com/user-attachments/assets/7f9e478c-c802-437d-acae-10794bf12392)
+![signup](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/signup.png)
+![signin](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/login.png)
+![verified-mail](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/verified.png)
 
 `SETTING UP YOUR PROFILE:`
-![profile-landing](https://github.com/user-attachments/assets/25656c2d-9dcf-4f11-a242-b8e90745a84f)
+![profile-landing](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/beginprofile.png)
 
 `SENDING & VIEWING FRIEND REQUESTS:`
 ![send-friend-request](https://github.com/user-attachments/assets/3e5d6bd1-5110-4452-8c73-4d159661719d)
-![friend-requests](https://github.com/user-attachments/assets/a81c0290-ff62-4f01-9792-de9be3ff30af)
+![friend-requests](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/friendrequest.png)
 
 `DIRECT MESSAGING:`
-![start-new-chat](https://github.com/user-attachments/assets/95dada0c-b57f-438f-87ec-b7c219b18880)
-![chats](https://github.com/user-attachments/assets/5ca65d19-c537-419e-984d-533a7d939aaf)
+![chats](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/directmess.png)
 
 `GROUP MESSAGING:`
-![create-group](https://github.com/user-attachments/assets/cae7f705-9665-4c32-973b-c3fd89d75c60)
-![group-chat](https://github.com/user-attachments/assets/8c070f09-e482-47de-8b48-d059f453b6b6)
+![group-chat](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/groupmess.png)
 
 `LIGHT MODE:`
+![light](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/theme.png)
 
 `MUSIC PLAYLISTS:`
+![music](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/music.png)
 
 `PHOTO FEED:`
+![photo](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/photofeed.png)
 
 `CHAT BOT AI:`
+![ai](https://raw.githubusercontent.com/danqNg0911/realtime-chat-app-plus/main/img/chatbot.png)
