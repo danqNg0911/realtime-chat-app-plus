@@ -186,12 +186,10 @@ Runs every backend plus the client in separate Command Prompt windows (make sure
 ![create-group](https://github.com/user-attachments/assets/cae7f705-9665-4c32-973b-c3fd89d75c60)
 ![group-chat](https://github.com/user-attachments/assets/8c070f09-e482-47de-8b48-d059f453b6b6)
 
-`SEARCH FUNCTIONALITY:`
-![search-chats](https://github.com/user-attachments/assets/a01e754f-8a12-4b95-abcb-d4060a8a9a0d)
+`LIGHT MODE:`
 
-`UPDATING YOUR PROFILE:`
-![profile-update](https://github.com/user-attachments/assets/858fc66f-5e2d-4ae6-b2a8-ea5b00315501)
+`MUSIC PLAYLISTS:`
 
-`VIEWING FRIEND & GROUP PROFILE:`
-![friend-info](https://github.com/user-attachments/assets/c577cda1-1f15-4c74-a367-73661c56a5bc)
-![group-info](https://github.com/user-attachments/assets/bcb770e9-aea9-4b42-bcfd-02ae935d19fd)
+`PHOTO FEED:`
+
+`CHAT BOT AI:`
